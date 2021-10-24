@@ -17,13 +17,13 @@
 #include "ant_fixed_k.h"
 #include "util.h"
 
-/* ANT_FIXED_K data */
-static double *probb;
-static double **trail;
+ /* ANT_FIXED_K data */
+static double* probb;
+static double** trail;
 static float alpha;
 static float beta;
 
-static int choose_vertex(int neighbors_by_color[problem->nof_vertices][problem->colors + 1], int *color_of) {/*{{{*/
+static int choose_vertex(int neighbors_by_color[problem->nof_vertices][problem->colors + 1], int* color_of) {/*{{{*/
 
   int v = 0, i, dsat, maxdsat;
 
@@ -33,8 +33,8 @@ static int choose_vertex(int neighbors_by_color[problem->nof_vertices][problem->
     if (color_of[i] == -1) {
       dsat = neighbors_by_color[i][problem->colors];
       if (dsat > maxdsat) {
-	v = i;
-	maxdsat = dsat;
+        v = i;
+        maxdsat = dsat;
       }
     }
   }
@@ -42,18 +42,18 @@ static int choose_vertex(int neighbors_by_color[problem->nof_vertices][problem->
 
 }/*}}}*/
 
-static void calculate_probbs(int v, int *color_of, int size_color[problem->colors],/*{{{*/
-			     int neighbors_by_color[problem->nof_vertices][problem->colors+1]) { 
-	
+static void calculate_probbs(int v, int* color_of, int size_color[problem->colors],/*{{{*/
+  int neighbors_by_color[problem->nof_vertices][problem->colors + 1]) {
+
   int c;
   double sum, traill, totalsum, neighbors;
 
   totalsum = 0;
 
   for (c = 0; c < problem->colors; c++) {
-		
+
     probb[c] = 0;
-		
+
     sum = trail[c][v];
 
     if (get_flag(problem->flags, FLAG_REUSE_COLOR)) {
@@ -68,15 +68,15 @@ static void calculate_probbs(int v, int *color_of, int size_color[problem->color
           traill = aco_info->x;
         }
         else {
-          traill = sum/size_color[c];
+          traill = sum / size_color[c];
         }
       }
     }
     else
-      traill = (size_color[c] == 0) ? 1 : sum/size_color[c];
+      traill = (size_color[c] == 0) ? 1 : sum / size_color[c];
 
     neighbors = neighbors_by_color[v][c] + 1;
-    neighbors = 1.0/neighbors;
+    neighbors = 1.0 / neighbors;
 
     probb[c] = pow(traill, alpha) * pow(neighbors, beta);
 
@@ -109,14 +109,14 @@ static int choose_color(void) {/*{{{*/
 
   last = 0;
   for (i = 0; i < problem->colors; i++) {
-    last += (probb[i]/div);
+    last += (probb[i] / div);
     if (p <= last) {
       return i;
     }
   }
   /* When it reaches here, it means that p == 1 */
-  return problem->colors -1;
-	
+  return problem->colors - 1;
+
 }/*}}}*/
 
 
@@ -138,22 +138,22 @@ void afk_initialize_data(float p_alpha, float p_beta) {/*{{{*/
   beta = p_beta;
 }/*}}}*/
 
-void ant_fixed_k(gcp_solution_t *solution, double **pheromone) {/*{{{*/
+void ant_fixed_k(gcp_solution_t* solution, double** pheromone) {/*{{{*/
 
   int i, j;
   int color = 0;			/* number of colors to be used */
   int colored = 0;		/* number of colored vertex */
   int v;					/* vertex to be colored */
-	
+
   int confl_vertices[problem->nof_vertices];
-  int neighbors_by_color[problem->nof_vertices][problem->colors+1];
+  int neighbors_by_color[problem->nof_vertices][problem->colors + 1];
   int size_color[problem->colors];
 
   double sum = 0.0;
 
   solution->nof_colors = problem->colors;
 
-  /* Initializing auxiliary arrays */	
+  /* Initializing auxiliary arrays */
   for (i = 0; i < problem->nof_vertices; i++) {
     solution->color_of[i] = -1;
     size_color[i] = 0;
@@ -192,30 +192,30 @@ void ant_fixed_k(gcp_solution_t *solution, double **pheromone) {/*{{{*/
       trail[color][i] += pheromone[v][i];
 
       if (problem->adj_matrix[v][i]) {
-	/* update degree of saturation: */	
-	if (neighbors_by_color[i][color] == 0) {
-	  neighbors_by_color[i][problem->colors]++;
-	}
-	/* now <i> has a neighbor colored with <color> */
-	neighbors_by_color[i][color]++;
+        /* update degree of saturation: */
+        if (neighbors_by_color[i][color] == 0) {
+          neighbors_by_color[i][problem->colors]++;
+        }
+        /* now <i> has a neighbor colored with <color> */
+        neighbors_by_color[i][color]++;
 
-	/* if a neighbor of <v> is colored with <color>, there is a
-	 * conflicting edge between them */
-	if (solution->color_of[i] == color) {
-	  solution->nof_confl_edges++;
-	  if (confl_vertices[i] == 0) {
-	    confl_vertices[i] = 1;
-	    solution->nof_confl_vertices++;
-	  }
-	}
+        /* if a neighbor of <v> is colored with <color>, there is a
+         * conflicting edge between them */
+        if (solution->color_of[i] == color) {
+          solution->nof_confl_edges++;
+          if (confl_vertices[i] == 0) {
+            confl_vertices[i] = 1;
+            solution->nof_confl_vertices++;
+          }
+        }
       }
     }
     /* if any new conflicting edge was created, <v> is a conflicting
      * vertex */
     if (conf != solution->nof_confl_edges) {
       if (confl_vertices[v] == 0) {
-	confl_vertices[v] = 1;
-	solution->nof_confl_vertices++;
+        confl_vertices[v] = 1;
+        solution->nof_confl_vertices++;
       }
     }
   }

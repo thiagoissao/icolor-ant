@@ -9,11 +9,11 @@
 #include "util.h"
 
 static double current_gettime_secs(void) {
-  struct timeval time;
+    struct timeval time;
 
-  gettimeofday(&time, NULL);
+    gettimeofday(&time, NULL);
 
-  return (time.tv_sec + (time.tv_usec/1000000.0));
+    return (time.tv_sec + (time.tv_usec / 1000000.0));
 }
 
 
@@ -48,29 +48,29 @@ static double current_alltime_secs(void) {/*{{{*/
 
 double current_time_secs(int flag, double initial) {
 
- switch(flag){
-   case TIME_INITIAL:
+    switch (flag) {
+    case TIME_INITIAL:
         return current_gettime_secs();
         break;
-   case TIME_FINAL:
+    case TIME_FINAL:
         return current_gettime_secs() - initial;
         break;
-   case TIME_USERTIME:
+    case TIME_USERTIME:
         return current_usertime_secs();
         break;
-   case TIME_ALLTIME:
+    case TIME_ALLTIME:
         return current_alltime_secs();
         break;
- }
+    }
 
- return 0;
+    return 0;
 
 }
 
 void* malloc_(size_t size) {/*{{{*/
-    void *p;
-        p = malloc(size);
-   
+    void* p;
+    p = malloc(size);
+
     if (!p) {
         perror("malloc");
         abort();
@@ -93,10 +93,10 @@ long int create_seed(void) {/*{{{*/
 }/*}}}*/
 
 #if defined NRAND
-unsigned long int print_seed(unsigned short *seed) {
-        unsigned long int ret;
-        memcpy(&ret, seed, sizeof(unsigned short)*3);
-        return ret;
+unsigned long int print_seed(unsigned short* seed) {
+    unsigned long int ret;
+    memcpy(&ret, seed, sizeof(unsigned short) * 3);
+    return ret;
 }
 #endif
 
