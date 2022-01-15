@@ -1,0 +1,13 @@
+{
+  "files.associations": {
+    ".sequelizerc": "javascript",
+    ".stylelintrc": "json",
+    ".prettierrc": "json",
+    ".babelrc": "json",
+    "*.tsx": "typescriptreact",
+    "ant_fixed_k.h": "c",
+    "color.h": "c",
+    "getopt.h": "c",
+    "limits.h": "c"
+  }
+}

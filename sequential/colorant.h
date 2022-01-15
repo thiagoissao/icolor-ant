@@ -52,7 +52,8 @@
  * * O algoritmo tenta reutilizar cores
  * *
  *
- * VERSAO 7: (VERSAO 3, EXCETO QUE A BUSCA LOCAO EH APENAS APLICADA A MELHOR FORMIGA)
+ * VERSAO 7: (VERSAO 3, EXCETO QUE A BUSCA LOCAO EH APENAS APLICADA A MELHOR
+ *FORMIGA)
  * * A melhor formiga da colônia reforça o feromônio
  * * A melhor formiga global reforça o feromônio
  * * Em cada ciclo, ou a melhor formiga da colônia ou a melhor formiga global
@@ -60,30 +61,29 @@
  * * A busca local é a React-Tabucol
  * * A busca local é aplicada apenas na melhor formiga da colônia
  *
-*************************************************************************/
+ *************************************************************************/
 
 #ifndef __COLORANT_H
 #define __COLORANT_H
 
 #include "color.h"
 
-#define COLORANT_ALPHA            2
-#define COLORANT_BETA             8
-#define COLORANT_RHO           0.60
-#define COLORANT_ANTS          200
-#define COLORANT_MEMORY_SIZE           25
-#define COLORANT_DELTA          0.5
+#define COLORANT_ALPHA 2
+#define COLORANT_BETA 8
+#define COLORANT_RHO 0.60
+#define COLORANT_ANTS 200
+#define COLORANT_MEMORY_SIZE 25
+#define COLORANT_DELTA 0.5
 
-#define COLORANT_GAP             10
-#define COLORANT_X              1.0
-#define COLORANT_Y              2.0
+#define COLORANT_GAP 10
+#define COLORANT_X 1.0
+#define COLORANT_Y 2.0
 
-#define COLORANT_GAMMA          0.4
-#define COLORANT_OMEGA          0.2
-#define COLORANT_ITERATIONS_ALPHA_BETA      25
+#define COLORANT_GAMMA 0.4
+#define COLORANT_OMEGA 0.2
+#define COLORANT_ITERATIONS_ALPHA_BETA 25
 #define COLORANT_PHEROMONE_SCHEME 1
 #define COLORANT_CHANGE_PHERO_SCHEME_ITERATIONS 10
-
 
 /* pheromone scheme 1 */
 #define PHEROMONE_SCHEME_1 1
@@ -124,7 +124,6 @@ struct aco_memory_t {
   aco_memory_t *tail;
 };
 
-
 typedef struct aco_t aco_t;
 
 aco_t *aco_info;
@@ -133,7 +132,6 @@ void colorant_printbanner(void);
 void colorant_malloc(void);
 void colorant_initialization(void);
 void colorant_show_solution(void);
-gcp_solution_t* colorant(void);
+gcp_solution_t *colorant(void);
 
 #endif /* __COLORANT1_H */
-
