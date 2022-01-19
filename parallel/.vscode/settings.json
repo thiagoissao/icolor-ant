@@ -5,10 +5,7 @@
     ".prettierrc": "json",
     ".babelrc": "json",
     "*.tsx": "typescriptreact",
-    "ant_fixed_k.h": "c",
-    "color.h": "c",
-    "getopt.h": "c",
-    "limits.h": "c",
-    "colorant.h": "c"
+    "helpers.h": "c",
+    "constants.h": "c"
   }
 }
