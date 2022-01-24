@@ -9,6 +9,7 @@
     "color.h": "c",
     "getopt.h": "c",
     "limits.h": "c",
-    "colorant.h": "c"
+    "colorant.h": "c",
+    "icolor.h": "c"
   }
 }
