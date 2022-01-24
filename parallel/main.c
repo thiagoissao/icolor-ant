@@ -5,10 +5,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "icolor.h"
-#include "icolorant.h"
-#include "tabucol.h"
-#include "util.h"
+#include "./src/icolor.h"
+#include "./src/icolorant.h"
+#include "./src/tabucol.h"
+#include "./src/util.h"
 
 int main(int argc, char *argv[]) { /*{{{*/
 

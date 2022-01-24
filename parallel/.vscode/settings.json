@@ -6,6 +6,7 @@
     ".babelrc": "json",
     "*.tsx": "typescriptreact",
     "helpers.h": "c",
-    "constants.h": "c"
+    "constants.h": "c",
+    "icolor.h": "c"
   }
 }
