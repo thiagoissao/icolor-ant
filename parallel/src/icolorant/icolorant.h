@@ -66,7 +66,7 @@
 #ifndef __ICOLORANT_H
 #define __ICOLORANT_H
 
-#include "icolor.h"
+#include "../icolor.h"
 
 #define COLORANT_ALPHA 2
 #define COLORANT_BETA 8
@@ -94,6 +94,9 @@
 /* pheromone scheme 3 */
 #define PHEROMONE_SCHEME_3 3
 
+/* parallelization */
+#define THREADS 1
+
 struct aco_t {
 
   float alpha_base;
@@ -115,6 +118,7 @@ struct aco_t {
   float rho;
   int pheromone_scheme;
   int change_phero_scheme_iterations;
+  int threads;
 };
 
 typedef struct aco_memory_t aco_memory_t;
@@ -128,10 +132,8 @@ typedef struct aco_t aco_t;
 
 aco_t *aco_info;
 
-void colorant_printbanner(void);
 void colorant_malloc(void);
 void colorant_initialization(void);
-void colorant_show_solution(void);
 gcp_solution_t *colorant(void);
 
 #endif /* __ICOLORANT1_H */

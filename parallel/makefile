@@ -3,7 +3,7 @@ CC = gcc
 BIN = colorant
 CFLAGS = -Wall -O3 -DNRAND  
 MAIN = main.c
-OBJS = ./src/icolor.o ./src/icolorant.o ./src/util.o ./src/tabucol.o ./src/ant_fixed_k.o ./src/helpers.o
+OBJS = ./src/icolor.o ./src/icolorant/icolorant.o ./src/icolorant/icolorant.utils.o ./src/util.o ./src/tabucol.o ./src/ant_fixed_k.o ./src/helpers.o
 
 
 all: $(OBJS) 

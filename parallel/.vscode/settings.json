@@ -7,6 +7,9 @@
     "*.tsx": "typescriptreact",
     "helpers.h": "c",
     "constants.h": "c",
-    "icolor.h": "c"
+    "icolor.h": "c",
+    "icolorant.h": "c",
+    "icolorant.utils.h": "c",
+    "util.h": "c"
   }
 }

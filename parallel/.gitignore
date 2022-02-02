@@ -2,7 +2,8 @@ main.o
 colorant
 src/ant_fixed_k.o
 src/icolor.o
-src/icolorant.o
+src/icolorant/icolorant.o
+src/icolorant/icolorant.utils.o
 src/tabucol.o
 src/util.o
 src/helpers.o

@@ -16,7 +16,8 @@
 #include <string.h>
 
 #include "icolor.h"
-#include "icolorant.h"
+#include "./icolorant/icolorant.h"
+#include "./icolorant/icolorant.utils.h"
 #include "tabucol.h"
 #include "util.h"
 #include "helpers.h"
@@ -60,20 +61,26 @@ void parseargs(int argc, char *argv[]) {
       {"time", 1, NULL, 'E'},
       {"convergence-cycles", 1, NULL, 'Y'},
       {"colors", 1, NULL, 'k'},
+      {"threads", 1, NULL, 'w'},
       {"verbose", 0, NULL, 'v'},
       {"tabucol-verbose", 0, NULL, 'V'},
       {"seed", 1, NULL, 'S'},
       {"output-filename", 1, NULL, 'f'},
-      {"help", 0, NULL, 'h'}
-
-  };
+      {"help", 0, NULL, 'h'}};
 
   while ((op = getopt_long(
               argc, argv,
-              "a:b:r:A:Rp:n:m:Md:g:x:y:G:o:i:t:T:s:N:F:uc:E:Y:k:vVS:f:h",
+              "w:a:b:r:A:Rp:n:m:Md:g:x:y:G:o:i:t:T:s:N:F:uc:E:Y:k:vVS:f:h",
               longopts, NULL)) != -1) {
 
     switch (op) {
+    case 'w':
+      aco_info->threads = THREADS;
+      int arg = atoi(optarg);
+      if (arg > 0) {
+        aco_info->threads = arg;
+      }
+      break;
     case 'a':
       aco_info->alpha = atof(optarg);
       if (aco_info->alpha <= 0.0)
@@ -342,7 +349,7 @@ void initialization(void) { /*{{{*/
 
 } /*}}}*/
 
-void printbanner(void) { /*{{{*/
+void printbanner(void) {
 
   fprintf(problem->fileout,
           "-------------------------------------------------\n");
@@ -358,6 +365,8 @@ void printbanner(void) { /*{{{*/
           "-------------------------------------------------\n");
   fprintf(problem->fileout, "  K......................................: %i\n",
           problem->colors);
+  fprintf(problem->fileout, "  No. of threads ........................: %d\n",
+          aco_info->threads);
   if (get_flag(problem->flags, FLAG_CYCLE))
     fprintf(problem->fileout, "  Cycles.................................: %d\n",
             problem->cycles);
@@ -385,8 +394,7 @@ void printbanner(void) { /*{{{*/
     fprintf(problem->fileout, "  Running Tabu search on verbose mode.\n");
   fprintf(problem->fileout,
           "-------------------------------------------------\n");
-
-} /*}}}*/
+}
 
 void test_map(gcp_solution_t *solution) { /*{{{*/
   int i, j, n;

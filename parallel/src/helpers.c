@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "icolorant.h"
+#include "./icolorant/icolorant.h"
 #include "tabucol.h"
 
 void show_help(char *nameprog) {
@@ -95,6 +95,8 @@ void show_help(char *nameprog) {
          "as the seed of rand function. Default: time\n");
   printf("\t[ -f, --output-filename                  ] <value>\tDefine the "
          "output filename. Default: stdout.\n");
+  printf("\t[ -w, --threads                          ] \t\t Define number "
+         "of threads.\n\n");
   printf("\t[ -h, --help                             ] \t\tDisplay this "
          "information.\n\n");
 }

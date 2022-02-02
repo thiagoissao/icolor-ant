@@ -6,7 +6,7 @@
 #include <string.h>
 
 #include "./src/icolor.h"
-#include "./src/icolorant.h"
+#include "./src/icolorant/icolorant.h"
 #include "./src/tabucol.h"
 #include "./src/util.h"
 

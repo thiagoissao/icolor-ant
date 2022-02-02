@@ -13,7 +13,7 @@
 #include <limits.h>
 
 #include "icolor.h"
-#include "icolorant.h"
+#include "./icolorant/icolorant.h"
 #include "ant_fixed_k.h"
 #include "util.h"
 
