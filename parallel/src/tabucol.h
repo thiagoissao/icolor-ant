@@ -37,7 +37,6 @@ tabucol_t *tabucol_info;
 
 void tabucol_printbanner(void);
 void tabucol_malloc(void);
-void tabucol_initialization(void);
 void tabucol_show_solution(void);
 void tabucol(gcp_solution_t *solution, int max_cycles, int type_of_tl);
 

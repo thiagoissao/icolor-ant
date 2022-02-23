@@ -43,7 +43,7 @@
 #include "tabucol.h"
 #include "util.h"
 
-void tabucol_printbanner(void) { /*{{{*/
+void tabucol_printbanner(void) {
 
   fprintf(problem->fileout, "TABUCOL\n");
   fprintf(problem->fileout,
@@ -88,10 +88,9 @@ void tabucol_printbanner(void) { /*{{{*/
 
   } else
     fprintf(problem->fileout, "  Do not use tabu search.\n");
+}
 
-} /*}}}*/
-
-void tabucol_malloc(void) { /*{{{*/
+void tabucol_malloc(void) {
 
   tabucol_info = malloc_(sizeof(tabucol_t));
   tabucol_info->tl_style = TABUCOL_REACTIVE;
@@ -100,9 +99,7 @@ void tabucol_malloc(void) { /*{{{*/
   tabucol_info->change_scheme_iterations = TABUCOL_CHANGE_SCHEME_ITERATIONS;
   tabucol_info->diff_scheme_iterations = TABUCOL_DIFF_SCHEME_ITERATIONS;
   tabucol_info->spent_time = 0;
-} /*}}}*/
-
-void tabucol_initialization(void) {}
+}
 
 void tabucol_show_solution(void) { return; }
 
@@ -115,7 +112,7 @@ static int *nodes_in_conflict = NULL;
 /* Index of nodes in array nodes_in_conflicts */
 static int *conf_position = NULL;
 
-static void initialize_arrays(gcp_solution_t *solution) { /*{{{*/
+static void initialize_arrays(gcp_solution_t *solution) {
 
   int i, j, n;
 
@@ -156,10 +153,9 @@ static void initialize_arrays(gcp_solution_t *solution) { /*{{{*/
       }
     }
   }
+}
 
-} /*}}}*/
-
-static void neighbor_solution(int best_node, int best_color, /*{{{*/
+static void neighbor_solution(int best_node, int best_color,
                               gcp_solution_t *solution, int total_it,
                               int t_tenure) {
 
@@ -266,10 +262,9 @@ static void neighbor_solution(int best_node, int best_color, /*{{{*/
 
   /* Set the tabu status */
   tabu_status[old_color][best_node] = total_it + t_tenure;
+}
 
-} /*}}}*/
-
-static void free_(void) { /*{{{*/
+static void free_(void) {
   int i;
   for (i = 0; i <= problem->colors; i++) {
     free(conflicts[i]);
@@ -285,17 +280,16 @@ static void free_(void) { /*{{{*/
   tabu_status = NULL;
   nodes_in_conflict = NULL;
   conf_position = NULL;
+}
 
-} /*}}}*/
-
-void tabucol(gcp_solution_t *solution, int max_cycles, int type_of_tl) { /*{{{*/
+void tabucol(gcp_solution_t *solution, int max_cycles, int type_of_tl) {
 
 #if defined DEBUG
   fprintf(stderr, "[INICIO] tabucol_info->tl_style: %i. %i\n",
           tabucol_info->tl_style, type_of_tl);
 #endif
 
-  /* declaring variables */ /*{{{*/
+  /* declaring variables */
   int i, c;
   int pairs[][3] = {{10000, 10, 5}, {10000, 15, 3}, {10000, 5, 10},
                     {5000, 15, 10}, {5000, 10, 15}, {5000, 5, 20},
@@ -323,10 +317,6 @@ void tabucol(gcp_solution_t *solution, int max_cycles, int type_of_tl) { /*{{{*/
   int max_min, p, new_value;
 
   double time_initial_ls = 0;
-
-  // printf("\tTABUCOL: %i\n", type_of_tl);
-
-  /*}}}*/
 
   initialize_arrays(solution);
 
@@ -358,8 +348,6 @@ void tabucol(gcp_solution_t *solution, int max_cycles, int type_of_tl) { /*{{{*/
   time_initial_ls = current_time_secs(TIME_INITIAL, 0);
 
   while (TRUE) {
-
-    // printf("\t\tTABUCOL: %i - %i (%i)\n", type_of_tl, total_it, max_cycles);
 
     nc = nodes_in_conflict[0];
     total_it++;
@@ -450,7 +438,7 @@ void tabucol(gcp_solution_t *solution, int max_cycles, int type_of_tl) { /*{{{*/
               total_it, nodes_in_conflict[0] /*best_solution_value*/);
     }
 
-    /* Calculating tabu_tenure: */ /*{{{*/
+    /* Calculating tabu_tenure: */
     if (type_of_tl == TABUCOL_REACTIVE) {
       max_min = 0;
       /* Update the min and max objective function value */
@@ -512,7 +500,7 @@ void tabucol(gcp_solution_t *solution, int max_cycles, int type_of_tl) { /*{{{*/
       RANDOM(problem->seed, problem->buffer, tabu_tenure, int, 10);
       tabu_tenure = (int)(0.6 * nc) + tabu_tenure;
 #endif
-    } /*}}}*/
+    }
 
 #if defined DEBUG
     // fprintf(stderr, "total: %i best: %i.\n",
@@ -576,5 +564,4 @@ void tabucol(gcp_solution_t *solution, int max_cycles, int type_of_tl) { /*{{{*/
   solution->total_cycles = total_it;
 
   free_();
-
-} /*}}}*/
+}

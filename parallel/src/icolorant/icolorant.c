@@ -384,7 +384,7 @@ gcp_solution_t *colorant(void) {
   initialize_data(local_best_ant, local_best_colony, local_ant_k,
                   ant_memory_insert, ant_memory_remove, pheromone, phero_var);
   local_best_ant->stop_criterion = 0;
-
+  printf("aquiii\n");
   while (!terminate_conditions(local_best_ant, cycle, converg)) {
 
     cycle++;
@@ -455,9 +455,6 @@ gcp_solution_t *colorant(void) {
       aco_info->beta = aco_info->beta_base * (1 - aco_info->gamma);
 
       change = 0;
-
-      // printf("2 alfa: %.2f beta:%.2f gama:%.2f omega:%.2f\n",
-      // aco_info->alpha, aco_info->beta, aco_info->gamma, aco_info->omega);
     }
 
     if ((get_flag(problem->flags, FLAG_DIFF_TABUCOL_SCHEME)) &&
@@ -469,10 +466,6 @@ gcp_solution_t *colorant(void) {
       printf("ACO LS: %i\n", tabucol_info->tl_style);
 #endif
     }
-
-    // printf("1 trocou: phero: %i cycle_phero: %i converg: %i \n",
-    // aco_info->pheromone_scheme, cycle_phero, converg);
-
     if ((get_flag(problem->flags, FLAG_CHANGE_PHEROMONE_SCHEME)) &&
         (converg >= aco_info->change_phero_scheme_iterations) &&
         (cycle_phero >= aco_info->change_phero_scheme_iterations)) {
@@ -482,8 +475,6 @@ gcp_solution_t *colorant(void) {
         aco_info->pheromone_scheme = 1;
 
       cycle_phero = 0;
-      // printf("trocou: phero: %i cycle: %i converg: %i \n",
-      // aco_info->pheromone_scheme, cycle, converg);
     }
   }
 

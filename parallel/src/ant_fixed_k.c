@@ -25,7 +25,7 @@ static float beta;
 
 static int choose_vertex(
     int neighbors_by_color[problem->nof_vertices][problem->colors + 1],
-    int *color_of) { /*{{{*/
+    int *color_of) {
 
   int v = 0, i, dsat, maxdsat;
 
@@ -41,11 +41,10 @@ static int choose_vertex(
     }
   }
   return v;
-
-} /*}}}*/
+}
 
 static void calculate_probbs(
-    int v, int *color_of, int size_color[problem->colors], /*{{{*/
+    int v, int *color_of, int size_color[problem->colors],
     int neighbors_by_color[problem->nof_vertices][problem->colors + 1]) {
 
   int c;
@@ -87,10 +86,9 @@ static void calculate_probbs(
 
   /* To avoid a new 'for'  */
   probb[problem->colors] = totalsum;
+}
 
-} /*}}}*/
-
-static int choose_color(void) { /*{{{*/
+static int choose_color(void) {
 
   int i;
   double p, last, div;
@@ -116,10 +114,9 @@ static int choose_color(void) { /*{{{*/
   }
   /* When it reaches here, it means that p == 1 */
   return problem->colors - 1;
+}
 
-} /*}}}*/
-
-void afk_initialize_data(float p_alpha, float p_beta) { /*{{{*/
+void afk_initialize_data(float p_alpha, float p_beta) {
 
   int i, j;
 
@@ -135,9 +132,9 @@ void afk_initialize_data(float p_alpha, float p_beta) { /*{{{*/
 
   alpha = p_alpha;
   beta = p_beta;
-} /*}}}*/
+}
 
-void ant_fixed_k(gcp_solution_t *solution, double **pheromone) { /*{{{*/
+void ant_fixed_k(gcp_solution_t *solution, double **pheromone) {
 
   int i, j;
   int color = 0;   /* number of colors to be used */
@@ -226,5 +223,4 @@ void ant_fixed_k(gcp_solution_t *solution, double **pheromone) { /*{{{*/
   solution->f1 = solution->nof_confl_vertices - solution->h1;
 
   solution->spent_time = current_time_secs(TIME_FINAL, time_initial);
-
-} /*}}}*/
+}

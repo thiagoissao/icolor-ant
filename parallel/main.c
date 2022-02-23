@@ -4,15 +4,14 @@
 #include <getopt.h>
 #include <stdlib.h>
 #include <string.h>
+#include <pthread.h>
 
-#include "./src/icolor.h"
 #include "./src/icolorant/icolorant.h"
 #include "./src/tabucol.h"
 #include "./src/util.h"
+#include "./main.h"
 
-int main(int argc, char *argv[]) { /*{{{*/
-
-  gcp_solution_t *results;
+int main(int argc, char *argv[]) {
 
 #if defined NRAND
   unsigned long int seed;
@@ -57,7 +56,6 @@ int main(int argc, char *argv[]) { /*{{{*/
   initialization();
 
   colorant_initialization();
-  tabucol_initialization();
 
   if (!(get_flag(problem->flags, FLAG_COLOR))) {
     problem->colors = problem->nof_vertices;
@@ -81,18 +79,29 @@ int main(int argc, char *argv[]) { /*{{{*/
   seed48_r(problem->seed, &problem->buffer);
 #endif
 
+  workers = malloc(aco_info->threads * sizeof(pthread_t));
+  pthread_mutex_init(&global_best_ant_mutex, NULL);
+
   printbanner();
 
   time_initial = current_time_secs(TIME_INITIAL, 0);
 
-  results = find_solution();
+  for (int i = 0; i < aco_info->threads; i++) {
+    pthread_create(&workers[i], NULL, (void *)find_global_best_ant, NULL);
+  }
+
+  for (int i = 0; i < aco_info->threads; i++) {
+    pthread_join(workers[i], NULL);
+  }
 
   problem->real_time = current_time_secs(TIME_FINAL, time_initial);
 
-  show_solution(results);
+  show_solution(global_best_ant);
 
   fclose(problem->fileout);
 
-  return 0;
+  free(workers);
+  pthread_mutex_destroy(&global_best_ant_mutex);
 
-} /*}}}*/
+  return 0;
+}

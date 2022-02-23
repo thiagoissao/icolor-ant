@@ -9,6 +9,9 @@ OBJS = ./src/icolor.o ./src/icolorant/icolorant.o ./src/icolorant/icolorant.util
 all: $(OBJS) 
 	$(CC) -o $(BIN) $(CFLAGS) $(MAIN) $(OBJS) -lm
 
+exec: 
+	 ./colorant ../instances/dsjc250.5.col -p 3 -k 28 -c 1000 -w 4
+
 clean:
 	rm $(OBJS) $(BIN)
 

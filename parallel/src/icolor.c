@@ -14,6 +14,7 @@
 #include <getopt.h>
 #include <stdlib.h>
 #include <string.h>
+#include <pthread.h>
 
 #include "icolor.h"
 #include "./icolorant/icolorant.h"
@@ -21,6 +22,7 @@
 #include "tabucol.h"
 #include "util.h"
 #include "helpers.h"
+#include "../main.h"
 
 static char *namefilein;
 
@@ -271,7 +273,7 @@ void parseargs(int argc, char *argv[]) {
   }
 }
 
-void initialization(void) { /*{{{*/
+void initialization(void) {
 
   FILE *in;
 
@@ -346,8 +348,7 @@ void initialization(void) { /*{{{*/
   }
 
   fclose(in);
-
-} /*}}}*/
+}
 
 void printbanner(void) {
 
@@ -396,7 +397,7 @@ void printbanner(void) {
           "-------------------------------------------------\n");
 }
 
-void test_map(gcp_solution_t *solution) { /*{{{*/
+void test_map(gcp_solution_t *solution) {
   int i, j, n;
   int confs = 0;
   for (i = 0; i < problem->nof_vertices; i++) {
@@ -423,9 +424,9 @@ void test_map(gcp_solution_t *solution) { /*{{{*/
     fprintf(problem->fileout, "ERROR!! Confl edges = %d; Calculated = %d\n",
             confs, solution->nof_confl_edges);
   }
-} /*}}}*/
+}
 
-void cpy_solution(gcp_solution_t *src, gcp_solution_t *dst) { /*{{{*/
+void cpy_solution(gcp_solution_t *src, gcp_solution_t *dst) {
 
   int i, j;
   if (get_flag(problem->flags, FLAG_S_ASSIGN)) {
@@ -451,10 +452,9 @@ void cpy_solution(gcp_solution_t *src, gcp_solution_t *dst) { /*{{{*/
   dst->stop_criterion = src->stop_criterion;
   dst->h1 = src->h1;
   dst->f1 = src->f1;
+}
 
-} /*}}}*/
-
-void show_solution(gcp_solution_t *solution) { /*{{{*/
+void show_solution(gcp_solution_t *solution) {
   fprintf(problem->fileout,
           "\n-------------------------------------------------\n");
   fprintf(problem->fileout, "SOLUTION:\n");
@@ -490,9 +490,9 @@ void show_solution(gcp_solution_t *solution) { /*{{{*/
   fprintf(problem->fileout,
           "-------------------------------------------------\n");
   test_map(solution);
-} /*}}}*/
+}
 
-gcp_solution_t *init_solution(void) { /*{{{*/
+gcp_solution_t *init_solution(void) {
   int i;
   gcp_solution_t *solution;
 
@@ -517,20 +517,17 @@ gcp_solution_t *init_solution(void) { /*{{{*/
   solution->stop_criterion = -1;
 
   return solution;
-} /*}}}*/
+}
 
-gcp_solution_t *find_solution() { /*{{{*/
+void find_global_best_ant() {
 
-  gcp_solution_t *sol = NULL;
+  pthread_mutex_lock(&global_best_ant_mutex);
 
-  sol = colorant();
+  global_best_ant = colorant();
+  pthread_mutex_unlock(&global_best_ant_mutex);
+}
 
-  return sol;
-
-} /*}}}*/
-
-int terminate_conditions(gcp_solution_t *solution, int cycle,
-                         int converg) { /*{{{*/
+int terminate_conditions(gcp_solution_t *solution, int cycle, int converg) {
 
   if (get_flag(problem->flags, FLAG_CONV) &&
       converg >= problem->convergence_cycles) {
@@ -545,5 +542,4 @@ int terminate_conditions(gcp_solution_t *solution, int cycle,
     return TRUE;
   }
   return FALSE;
-
-} /*}}}*/
+}
