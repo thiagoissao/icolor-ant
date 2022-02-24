@@ -9,5 +9,7 @@
 #define __HELPERS_H
 
 void show_help(char *nameprog);
+void show_solution(gcp_solution_t *solution);
+void printbanner(void);
 
 #endif /* __HELPERS_H */

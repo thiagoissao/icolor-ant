@@ -350,82 +350,6 @@ void initialization(void) {
   fclose(in);
 }
 
-void printbanner(void) {
-
-  fprintf(problem->fileout,
-          "-------------------------------------------------\n");
-  colorant_printbanner();
-  fprintf(problem->fileout,
-          "-------------------------------------------------\n");
-  tabucol_printbanner();
-
-  fprintf(problem->fileout,
-          "-------------------------------------------------\n");
-  fprintf(problem->fileout, "GENERAL Options\n");
-  fprintf(problem->fileout,
-          "-------------------------------------------------\n");
-  fprintf(problem->fileout, "  K......................................: %i\n",
-          problem->colors);
-  fprintf(problem->fileout, "  No. of threads ........................: %d\n",
-          aco_info->threads);
-  if (get_flag(problem->flags, FLAG_CYCLE))
-    fprintf(problem->fileout, "  Cycles.................................: %d\n",
-            problem->cycles);
-  if (get_flag(problem->flags, FLAG_TIME))
-    fprintf(problem->fileout,
-            "  Time...................................: %.2lf\n",
-            problem->time);
-
-#if defined LRAND
-  fprintf(problem->fileout,
-          "  Seed...................................: %lu (lrand)\n",
-          problem->seed);
-#elif defined NRAND
-  fprintf(problem->fileout,
-          "  Seed...................................: %lu (nrand)\n",
-          print_seed(problem->seed));
-#endif
-  if (get_flag(problem->flags, FLAG_CONV))
-    fprintf(problem->fileout, "  Stop after %d cycles without improvement.\n",
-            problem->convergence_cycles);
-
-  if (problem->flags & FLAG_VERBOSE)
-    fprintf(problem->fileout, "  Running on verbose mode.\n");
-  if (problem->flags & FLAG_TABUCOL_VERBOSE)
-    fprintf(problem->fileout, "  Running Tabu search on verbose mode.\n");
-  fprintf(problem->fileout,
-          "-------------------------------------------------\n");
-}
-
-void test_map(gcp_solution_t *solution) {
-  int i, j, n;
-  int confs = 0;
-  for (i = 0; i < problem->nof_vertices; i++) {
-    // printf("color of %d: %d\n", i+1, solution->color_of[i]);
-    if (get_flag(problem->flags, FLAG_ADJ_MATRIX)) {
-      for (j = i; j < problem->nof_vertices; j++) {
-        if (problem->adj_matrix[i][j] &&
-            solution->color_of[i] == solution->color_of[j]) {
-          //	printf("ERROR!! Conflicting edge %d--%d \n", i+1, j+1);
-          confs++;
-        }
-      }
-    } else {
-      for (j = 1; j <= problem->adj_list[i][0]; j++) {
-        n = problem->adj_list[i][j];
-        if (solution->color_of[i] == solution->color_of[n]) {
-          //	printf("ERROR!! Conflicting edge %d--%d \n", i+1, n+1);
-          confs++;
-        }
-      }
-    }
-  }
-  if (confs != solution->nof_confl_edges) {
-    fprintf(problem->fileout, "ERROR!! Confl edges = %d; Calculated = %d\n",
-            confs, solution->nof_confl_edges);
-  }
-}
-
 void cpy_solution(gcp_solution_t *src, gcp_solution_t *dst) {
 
   int i, j;
@@ -452,44 +376,6 @@ void cpy_solution(gcp_solution_t *src, gcp_solution_t *dst) {
   dst->stop_criterion = src->stop_criterion;
   dst->h1 = src->h1;
   dst->f1 = src->f1;
-}
-
-void show_solution(gcp_solution_t *solution) {
-  fprintf(problem->fileout,
-          "\n-------------------------------------------------\n");
-  fprintf(problem->fileout, "SOLUTION:\n");
-  fprintf(problem->fileout,
-          "-------------------------------------------------\n");
-  fprintf(problem->fileout, "No. of colors utilized.............: %d\n",
-          solution->nof_colors);
-  fprintf(problem->fileout, "No. of conflicting edges...........: %d\n",
-          solution->nof_confl_edges);
-  fprintf(problem->fileout, "No. of conflicting vertices........: %d\n",
-          solution->nof_confl_vertices);
-  fprintf(problem->fileout, "Real time..........................: %lf\n",
-          problem->real_time);
-  fprintf(problem->fileout, "Spent Time.........................: %lf\n",
-          solution->spent_time);
-
-  fprintf(problem->fileout, "Spent time (ACO)...................: %lf\n",
-          solution->spent_time - tabucol_info->spent_time);
-  fprintf(problem->fileout, "Spent time (LS)....................: %lf\n",
-          tabucol_info->spent_time);
-
-  fprintf(problem->fileout, "Time to the best...................: %lf\n",
-          solution->time_to_best);
-  fprintf(problem->fileout, "Total of cycles....................: %d\n",
-          solution->total_cycles);
-  fprintf(problem->fileout, "Cycles to the best.................: %d\n",
-          solution->cycles_to_best);
-  fprintf(problem->fileout, "Stop criterion.....................: %d\n",
-          solution->stop_criterion);
-
-  colorant_show_solution();
-
-  fprintf(problem->fileout,
-          "-------------------------------------------------\n");
-  test_map(solution);
 }
 
 gcp_solution_t *init_solution(void) {

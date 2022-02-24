@@ -7,6 +7,7 @@
 #include <pthread.h>
 
 #include "./src/icolorant/icolorant.h"
+#include "./src/helpers.h"
 #include "./src/tabucol.h"
 #include "./src/util.h"
 #include "./main.h"
