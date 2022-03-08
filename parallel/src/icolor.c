@@ -407,10 +407,10 @@ gcp_solution_t *init_solution(void) {
 
 void find_global_best_ant() {
 
-  exec_colorant_t *local_ant = malloc_(sizeof(exec_colorant_t));
+  ant_t *local_ant = malloc_(sizeof(ant_t *));
   pthread_mutex_lock(&global_best_ant_mutex);
 
-  global_best_ant = execute_colorant(local_ant);
+  global_best_ant = execute_colorant(&local_ant);
   pthread_mutex_unlock(&global_best_ant_mutex);
 }
 
