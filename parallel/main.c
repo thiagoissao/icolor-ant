@@ -12,6 +12,17 @@
 #include "./src/util.h"
 #include "./main.h"
 
+void find_global_best_ant(void *i) {
+  ant_t *local_ant = NULL;
+
+  pthread_mutex_lock(&global_best_ant_mutex);
+  execute_colorant(&local_ant);
+  printf("abaa %d\n", local_ant->best_ant->nof_confl_edges);
+
+  global_best_ant = local_ant->best_ant;
+  pthread_mutex_unlock(&global_best_ant_mutex);
+}
+
 int main(int argc, char *argv[]) {
 
 #if defined NRAND
@@ -81,6 +92,7 @@ int main(int argc, char *argv[]) {
 #endif
 
   workers = malloc(aco_info->threads * sizeof(pthread_t));
+  local_ants = malloc_(aco_info->threads * sizeof(ant_t *));
   pthread_mutex_init(&global_best_ant_mutex, NULL);
 
   printbanner();
@@ -88,7 +100,7 @@ int main(int argc, char *argv[]) {
   time_initial = current_time_secs(TIME_INITIAL, 0);
 
   for (int i = 0; i < aco_info->threads; i++) {
-    pthread_create(&workers[i], NULL, (void *)find_global_best_ant, NULL);
+    pthread_create(&workers[i], NULL, (void *)find_global_best_ant, (void *)i);
   }
 
   for (int i = 0; i < aco_info->threads; i++) {

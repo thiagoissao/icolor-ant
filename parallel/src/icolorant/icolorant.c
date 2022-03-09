@@ -375,6 +375,8 @@ gcp_solution_t *execute_colorant(ant_t **local_ant) {
 
   (*local_ant) = initialize_data();
   (*local_ant)->best_ant->stop_criterion = 0;
+  printf("abaAAAa %d\n", (*local_ant)->best_ant->nof_confl_edges);
+
   while (!terminate_conditions((*local_ant)->best_ant, cycle, converg)) {
 
     cycle++;
@@ -455,9 +457,6 @@ gcp_solution_t *execute_colorant(ant_t **local_ant) {
       tabucol_info->tl_style = tabucol_info->tl_style == TABUCOL_REACTIVE
                                    ? TABUCOL_DYNAMIC
                                    : TABUCOL_REACTIVE;
-#if defined DEBUG
-      printf("ACO LS: %i\n", tabucol_info->tl_style);
-#endif
     }
     if ((get_flag(problem->flags, FLAG_CHANGE_PHEROMONE_SCHEME)) &&
         (converg >= aco_info->change_phero_scheme_iterations) &&

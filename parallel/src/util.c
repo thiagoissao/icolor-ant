@@ -16,7 +16,7 @@ static double current_gettime_secs(void) {
   return (time.tv_sec + (time.tv_usec / 1000000.0));
 }
 
-static double current_usertime_secs(void) { /*{{{*/
+static double current_usertime_secs(void) {
   double usertime;
   struct rusage usage;
 
@@ -28,9 +28,9 @@ static double current_usertime_secs(void) { /*{{{*/
   usertime = usage.ru_utime.tv_sec + (usage.ru_utime.tv_usec * 1e-6);
 
   return usertime;
-} /*}}}*/
+}
 
-static double current_alltime_secs(void) { /*{{{*/
+static double current_alltime_secs(void) {
   double usertime, systemtime;
   struct rusage usage;
 
@@ -43,7 +43,7 @@ static double current_alltime_secs(void) { /*{{{*/
   systemtime = usage.ru_stime.tv_sec + (usage.ru_stime.tv_usec * 1e-6);
 
   return (usertime + systemtime);
-} /*}}}*/
+}
 
 double current_time_secs(int flag, double initial) {
 
@@ -65,7 +65,7 @@ double current_time_secs(int flag, double initial) {
   return 0;
 }
 
-void *malloc_(size_t size) { /*{{{*/
+void *malloc_(size_t size) {
   void *p;
   p = malloc(size);
 
@@ -74,9 +74,9 @@ void *malloc_(size_t size) { /*{{{*/
     abort();
   }
   return p;
-} /*}}}*/
+}
 
-long int create_seed(void) { /*{{{*/
+long int create_seed(void) {
   long int gseed;
   struct timeval tval;
 
@@ -88,7 +88,7 @@ long int create_seed(void) { /*{{{*/
   gseed = tval.tv_sec * tval.tv_usec;
 
   return gseed;
-} /*}}}*/
+}
 
 #if defined NRAND
 unsigned long int print_seed(unsigned short *seed) {
