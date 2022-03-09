@@ -147,6 +147,7 @@ aco_t *aco_info;
 
 void colorant_malloc(void);
 void colorant_initialization(void);
-gcp_solution_t *execute_colorant(ant_t **params);
+gcp_solution_t *execute_colorant(ant_t **local_ant, int *cycle, int *converg,
+                                 int *change, int *cycle_phero);
 
 #endif /* __ICOLORANT1_H */
