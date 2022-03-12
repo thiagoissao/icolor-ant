@@ -405,14 +405,6 @@ gcp_solution_t *init_solution(void) {
   return solution;
 }
 
-void find_global_best_ant() {
-
-  pthread_mutex_lock(&global_best_ant_mutex);
-
-  global_best_ant = colorant();
-  pthread_mutex_unlock(&global_best_ant_mutex);
-}
-
 int terminate_conditions(gcp_solution_t *solution, int cycle, int converg) {
 
   if (get_flag(problem->flags, FLAG_CONV) &&

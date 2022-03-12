@@ -14,5 +14,6 @@
 gcp_solution_t *global_best_ant;
 pthread_mutex_t global_best_ant_mutex;
 pthread_t *workers;
+ant_t *local_ants;
 
 #endif /* __MAIN_H */

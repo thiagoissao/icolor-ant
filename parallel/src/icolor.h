@@ -131,7 +131,6 @@ typedef struct gcp_solution_t gcp_solution_t;
 
 gcp_t *problem;
 
-void find_global_best_ant(void);
 gcp_solution_t *init_solution(void);
 int terminate_conditions(gcp_solution_t *solution, int cycle, int converg);
 void cpy_solution(gcp_solution_t *src, gcp_solution_t *dst);

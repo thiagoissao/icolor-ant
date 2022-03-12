@@ -212,8 +212,8 @@ static void initialize_data(void) {
 
   int i, j;
 
-  pheromone = malloc_(sizeof(double *) * problem->nof_vertices);
-  phero_var = malloc_(sizeof(double *) * problem->nof_vertices);
+  pheromone = malloc_(sizeof(double) * problem->nof_vertices);
+  phero_var = malloc_(sizeof(double) * problem->nof_vertices);
 
   for (i = 0; i < problem->nof_vertices; i++) {
     pheromone[i] = malloc_(sizeof(double) * problem->nof_vertices);

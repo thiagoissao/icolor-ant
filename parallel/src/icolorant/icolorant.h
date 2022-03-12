@@ -128,12 +128,26 @@ struct aco_memory_t {
   aco_memory_t *tail;
 };
 
+typedef struct ant_t ant_t;
+struct ant_t {
+  gcp_solution_t *best_ant;
+  gcp_solution_t *best_colony;
+  gcp_solution_t *ant_k;
+
+  gcp_solution_t *ant_memory_insert;
+  gcp_solution_t *ant_memory_remove;
+
+  double **pheromones;
+  double **phero_vars;
+};
+
 typedef struct aco_t aco_t;
 
 aco_t *aco_info;
 
 void colorant_malloc(void);
 void colorant_initialization(void);
-gcp_solution_t *colorant(void);
+gcp_solution_t *execute_colorant(ant_t **local_ant, int *cycle, int *converg,
+                                 int *change, int *cycle_phero);
 
 #endif /* __ICOLORANT1_H */
