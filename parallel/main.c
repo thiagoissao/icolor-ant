@@ -10,16 +10,12 @@
 #include "./src/helpers.h"
 #include "./src/tabucol.h"
 #include "./src/util.h"
-#include "./main.h"
 
 void find_global_best_ant(void *i) {
   ant_t *local_ant = NULL;
-  int cycle = 0;
-  int converg = 0;
-  int change = 0;
-  int cycle_phero = 0;
+
   pthread_mutex_lock(&global_best_ant_mutex);
-  execute_colorant(&local_ant, &cycle, &converg, &change, &cycle_phero);
+  execute_colorant(&local_ant);
 
   global_best_ant = local_ant->best_ant;
   pthread_mutex_unlock(&global_best_ant_mutex);

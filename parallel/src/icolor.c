@@ -22,7 +22,6 @@
 #include "tabucol.h"
 #include "util.h"
 #include "helpers.h"
-#include "../main.h"
 
 static char *namefilein;
 

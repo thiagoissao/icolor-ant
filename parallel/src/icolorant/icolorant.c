@@ -366,28 +366,32 @@ static void construct_solutions(int cycle, ant_t **local_ant) {
   }
 }
 
-gcp_solution_t *execute_colorant(ant_t **local_ant, int *cycle, int *converg,
-                                 int *change, int *cycle_phero) {
+gcp_solution_t *execute_colorant(ant_t **local_ant) {
+
+  int cycle = 0;
+  int converg = 0;
+  int change = 0;
+  int cycle_phero = 0;
 
   (*local_ant) = initialize_data();
   (*local_ant)->best_ant->stop_criterion = 0;
 
-  while (!terminate_conditions((*local_ant)->best_ant, *cycle, *converg)) {
+  while (!terminate_conditions((*local_ant)->best_ant, cycle, converg)) {
 
-    *cycle = *cycle + 1;
-    *converg = *converg + 1;
-    *cycle_phero = *cycle_phero + 1;
+    cycle = cycle + 1;
+    converg = converg + 1;
+    cycle_phero = cycle_phero + 1;
 
-    construct_solutions(*cycle, local_ant);
+    construct_solutions(cycle, local_ant);
 
     if ((*local_ant)->best_colony->nof_confl_vertices <
         (*local_ant)->best_ant->nof_confl_vertices) {
       cpy_solution((*local_ant)->best_colony, (*local_ant)->best_ant);
-      (*local_ant)->best_ant->cycles_to_best = *cycle;
+      (*local_ant)->best_ant->cycles_to_best = cycle;
       (*local_ant)->best_ant->time_to_best =
           (*local_ant)->best_colony->spent_time;
-      *converg = 0;
-      *change = 1;
+      converg = 0;
+      change = 1;
     }
 
     switch (aco_info->pheromone_scheme) {
@@ -402,7 +406,7 @@ gcp_solution_t *execute_colorant(ant_t **local_ant, int *cycle, int *converg,
                                        (*local_ant)->pheromones);
       break;
     case PHEROMONE_SCHEME_3:
-      update_pheromone_trails_scheme_3(*cycle, (*local_ant)->best_ant,
+      update_pheromone_trails_scheme_3(cycle, (*local_ant)->best_ant,
                                        (*local_ant)->best_colony,
                                        (*local_ant)->pheromones);
       break;
@@ -416,7 +420,7 @@ gcp_solution_t *execute_colorant(ant_t **local_ant, int *cycle, int *converg,
 
     if (get_flag(problem->flags, FLAG_VERBOSE)) {
       fprintf(problem->fileout,
-              "Cycle %d - Conflicts found: %d (edges), %d (vertices)\n", *cycle,
+              "Cycle %d - Conflicts found: %d (edges), %d (vertices)\n", cycle,
               (*local_ant)->best_ant->nof_confl_edges,
               (*local_ant)->best_ant->nof_confl_vertices);
       fflush(stdout);
@@ -428,10 +432,10 @@ gcp_solution_t *execute_colorant(ant_t **local_ant, int *cycle, int *converg,
     }
 
     if (get_flag(problem->flags, FLAG_CHANGE_ALPHA_BETA) &&
-        ((*cycle % aco_info->iterations_alpha_beta) == 0)) {
+        ((cycle % aco_info->iterations_alpha_beta) == 0)) {
 
-      aco_info->gamma = *change ? (1 - aco_info->omega) * aco_info->gamma
-                                : (1 + aco_info->omega) * aco_info->gamma;
+      aco_info->gamma = change ? (1 - aco_info->omega) * aco_info->gamma
+                               : (1 + aco_info->omega) * aco_info->gamma;
 
       aco_info->alpha = aco_info->alpha_base * aco_info->gamma;
       aco_info->beta = aco_info->beta_base * (1 - aco_info->gamma);
@@ -444,30 +448,30 @@ gcp_solution_t *execute_colorant(ant_t **local_ant, int *cycle, int *converg,
       aco_info->alpha = aco_info->alpha_base * aco_info->gamma;
       aco_info->beta = aco_info->beta_base * (1 - aco_info->gamma);
 
-      *change = 0;
+      change = 0;
     }
 
     if ((get_flag(problem->flags, FLAG_DIFF_TABUCOL_SCHEME)) &&
-        ((*cycle % tabucol_info->diff_scheme_iterations) == 0)) {
+        ((cycle % tabucol_info->diff_scheme_iterations) == 0)) {
       tabucol_info->tl_style = tabucol_info->tl_style == TABUCOL_REACTIVE
                                    ? TABUCOL_DYNAMIC
                                    : TABUCOL_REACTIVE;
     }
     if ((get_flag(problem->flags, FLAG_CHANGE_PHEROMONE_SCHEME)) &&
-        (*converg >= aco_info->change_phero_scheme_iterations) &&
-        (*cycle_phero >= aco_info->change_phero_scheme_iterations)) {
+        (converg >= aco_info->change_phero_scheme_iterations) &&
+        (cycle_phero >= aco_info->change_phero_scheme_iterations)) {
 
       aco_info->pheromone_scheme++;
       if (aco_info->pheromone_scheme > 3)
         aco_info->pheromone_scheme = 1;
 
-      *cycle_phero = 0;
+      cycle_phero = 0;
     }
   }
 
   (*local_ant)->best_ant->spent_time =
       current_time_secs(TIME_FINAL, time_initial);
-  (*local_ant)->best_ant->total_cycles = *cycle;
+  (*local_ant)->best_ant->total_cycles = cycle;
 
   return (*local_ant)->best_ant;
 }
