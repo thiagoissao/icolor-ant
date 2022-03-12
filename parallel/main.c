@@ -90,7 +90,6 @@ int main(int argc, char *argv[]) {
 #endif
 
   workers = malloc(aco_info->threads * sizeof(pthread_t));
-  local_ants = malloc_(aco_info->threads * sizeof(ant_t *));
   pthread_mutex_init(&global_best_ant_mutex, NULL);
 
   printbanner();

@@ -152,6 +152,5 @@ gcp_solution_t *execute_colorant(ant_t **local_ant);
 gcp_solution_t *global_best_ant;
 pthread_mutex_t global_best_ant_mutex;
 pthread_t *workers;
-ant_t *local_ants;
 
 #endif /* __ICOLORANT1_H */
