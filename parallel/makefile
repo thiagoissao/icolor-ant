@@ -10,7 +10,7 @@ all: $(OBJS)
 	$(CC) -o $(BIN) $(CFLAGS) $(MAIN) $(OBJS) -lm
 
 exec-small: 
-	 ./colorant ../instances/dsjc125.5.col -p 3 -k 17 -c 1000 -w 4
+	 ./colorant ../instances/dsjc125.5.col -p 3 -k 17 -c 1000 -w 2
 
 exec-large: 
 	 ./colorant ../instances/dsjc250.5.col -p 3 -k 28 -c 1000 -w 4

@@ -17,12 +17,6 @@
 #include "ant_fixed_k.h"
 #include "util.h"
 
-/* ANT_FIXED_K data */
-static double *probb;
-static double **trail;
-static float alpha;
-static float beta;
-
 static int choose_vertex(
     int neighbors_by_color[problem->nof_vertices][problem->colors + 1],
     int *color_of) {
@@ -44,7 +38,8 @@ static int choose_vertex(
 }
 
 static void calculate_probbs(
-    int v, int *color_of, int size_color[problem->colors],
+    ant_fixed_k_t **ant_fixed_k, int v, int *color_of,
+    int size_color[problem->colors],
     int neighbors_by_color[problem->nof_vertices][problem->colors + 1]) {
 
   int c;
@@ -54,9 +49,9 @@ static void calculate_probbs(
 
   for (c = 0; c < problem->colors; c++) {
 
-    probb[c] = 0;
+    (*ant_fixed_k)->probb[c] = 0;
 
-    sum = trail[c][v];
+    sum = (*ant_fixed_k)->trail[c][v];
 
     if (get_flag(problem->flags, FLAG_REUSE_COLOR)) {
 #if defined DEBUG
@@ -77,23 +72,24 @@ static void calculate_probbs(
     neighbors = neighbors_by_color[v][c] + 1;
     neighbors = 1.0 / neighbors;
 
-    probb[c] = pow(traill, alpha) * pow(neighbors, beta);
+    (*ant_fixed_k)->probb[c] = pow(traill, (*ant_fixed_k)->alpha) *
+                               pow(neighbors, (*ant_fixed_k)->beta);
 
-    totalsum += probb[c];
+    totalsum += (*ant_fixed_k)->probb[c];
   }
 
   totalsum = (totalsum == 0) ? 1 : totalsum;
 
   /* To avoid a new 'for'  */
-  probb[problem->colors] = totalsum;
+  (*ant_fixed_k)->probb[problem->colors] = totalsum;
 }
 
-static int choose_color(void) {
+static int choose_color(ant_fixed_k_t **ant_fixed_k) {
 
   int i;
   double p, last, div;
 
-  div = probb[problem->colors];
+  div = (*ant_fixed_k)->probb[problem->colors];
 
 #if defined LRAND
   // p = (double) RANDOM_UNIT() / INT_MAX;
@@ -107,7 +103,7 @@ static int choose_color(void) {
 
   last = 0;
   for (i = 0; i < problem->colors; i++) {
-    last += (probb[i] / div);
+    last += ((*ant_fixed_k)->probb[i] / div);
     if (p <= last) {
       return i;
     }
@@ -116,25 +112,30 @@ static int choose_color(void) {
   return problem->colors - 1;
 }
 
-void afk_initialize_data(float p_alpha, float p_beta) {
+struct ant_fixed_k_t *afk_initialize_data(float p_alpha, float p_beta) {
+
+  ant_fixed_k_t *ant_fixed_k = malloc_(sizeof(ant_fixed_k_t));
 
   int i, j;
 
-  probb = malloc_(sizeof(double) * (problem->colors + 1));
-  trail = malloc_(sizeof(double *) * problem->colors);
+  ant_fixed_k->probb = malloc_(sizeof(double) * (problem->colors + 1));
+  ant_fixed_k->trail = malloc_(sizeof(double *) * problem->colors);
 
   for (i = 0; i < problem->colors; i++) {
-    trail[i] = malloc_(sizeof(double) * problem->nof_vertices);
+    ant_fixed_k->trail[i] = malloc_(sizeof(double) * problem->nof_vertices);
     for (j = 0; j < problem->nof_vertices; j++) {
-      trail[i][j] = 0;
+      ant_fixed_k->trail[i][j] = 0;
     }
   }
 
-  alpha = p_alpha;
-  beta = p_beta;
+  ant_fixed_k->alpha = p_alpha;
+  ant_fixed_k->beta = p_beta;
+
+  return ant_fixed_k;
 }
 
-void ant_fixed_k(gcp_solution_t *solution, double **pheromone) {
+void ant_fixed_k(ant_fixed_k_t **fixed_k, gcp_solution_t *solution,
+                 double **pheromone) {
 
   int i, j;
   int color = 0;   /* number of colors to be used */
@@ -156,7 +157,7 @@ void ant_fixed_k(gcp_solution_t *solution, double **pheromone) {
     confl_vertices[i] = 0;
     for (j = 0; j < problem->colors; j++) {
       neighbors_by_color[i][j] = 0;
-      trail[j][i] = 0;
+      (*fixed_k)->trail[j][i] = 0;
     }
     neighbors_by_color[i][problem->colors] = 0;
   }
@@ -170,10 +171,11 @@ void ant_fixed_k(gcp_solution_t *solution, double **pheromone) {
     v = choose_vertex(neighbors_by_color, solution->color_of);
 
     /* Calculate colors probabilities */
-    calculate_probbs(v, solution->color_of, size_color, neighbors_by_color);
+    calculate_probbs(fixed_k, v, solution->color_of, size_color,
+                     neighbors_by_color);
 
     /* Choose a color to be assigned to v */
-    color = choose_color();
+    color = choose_color(fixed_k);
 
     solution->color_of[v] = color;
     size_color[color]++;
@@ -185,7 +187,7 @@ void ant_fixed_k(gcp_solution_t *solution, double **pheromone) {
 
       /* trail keeps the pheromone between a vertex and all the vertex
        * already colored with each color */
-      trail[color][i] += pheromone[v][i];
+      (*fixed_k)->trail[color][i] += pheromone[v][i];
 
       if (problem->adj_matrix[v][i]) {
         /* update degree of saturation: */

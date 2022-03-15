@@ -140,8 +140,6 @@ struct ant_t *initialize_data() {
     local_ant->ant_memory_insert->nof_colors = problem->colors;
     local_ant->ant_memory_insert->spent_time_ls = 0;
   }
-
-  afk_initialize_data(aco_info->alpha, aco_info->beta);
   return local_ant;
 }
 
@@ -303,7 +301,8 @@ static void update_pheromone_trails_scheme_3(int cycle,
 
 /* END Functions to help updating pheromone */
 
-static void construct_solutions(int cycle, ant_t **local_ant) {
+static void construct_solutions(int cycle, ant_t **local_ant,
+                                ant_fixed_k_t **fixed_k) {
 
   aco_memory_t *memory = NULL;
   gcp_solution_t *ant_memory;
@@ -314,7 +313,7 @@ static void construct_solutions(int cycle, ant_t **local_ant) {
   for (k = 0; k < ants; k++) {
     (*local_ant)->ant_k->total_cycles = cycle;
 
-    ant_fixed_k((*local_ant)->ant_k, (*local_ant)->pheromones);
+    ant_fixed_k(fixed_k, (*local_ant)->ant_k, (*local_ant)->pheromones);
 
     /* Apply local search in all ants */
     if (get_flag(problem->flags, FLAG_TABUCOL_ALL_ANTS) &&
@@ -366,7 +365,8 @@ static void construct_solutions(int cycle, ant_t **local_ant) {
   }
 }
 
-gcp_solution_t *execute_colorant(ant_t **local_ant) {
+gcp_solution_t *execute_colorant(ant_t **local_ant,
+                                 ant_fixed_k_t **ant_fixed_k) {
 
   int cycle = 0;
   int converg = 0;
@@ -374,6 +374,7 @@ gcp_solution_t *execute_colorant(ant_t **local_ant) {
   int cycle_phero = 0;
 
   (*local_ant) = initialize_data();
+  (*ant_fixed_k) = afk_initialize_data(aco_info->alpha, aco_info->beta);
   (*local_ant)->best_ant->stop_criterion = 0;
 
   while (!terminate_conditions((*local_ant)->best_ant, cycle, converg)) {
@@ -382,7 +383,8 @@ gcp_solution_t *execute_colorant(ant_t **local_ant) {
     converg = converg + 1;
     cycle_phero = cycle_phero + 1;
 
-    construct_solutions(cycle, local_ant);
+    construct_solutions(cycle, local_ant, ant_fixed_k);
+    printf("aquii \n");
 
     if ((*local_ant)->best_colony->nof_confl_vertices <
         (*local_ant)->best_ant->nof_confl_vertices) {

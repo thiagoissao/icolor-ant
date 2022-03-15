@@ -10,13 +10,15 @@
 #include "./src/helpers.h"
 #include "./src/tabucol.h"
 #include "./src/util.h"
+#include "./src/ant_fixed_k.h"
 
 void find_global_best_ant(void *i) {
   ant_t *local_ant = NULL;
+  ant_fixed_k_t *ant_fixed_k = NULL;
+
+  execute_colorant(&local_ant, &ant_fixed_k);
 
   pthread_mutex_lock(&global_best_ant_mutex);
-  execute_colorant(&local_ant);
-
   global_best_ant = local_ant->best_ant;
   pthread_mutex_unlock(&global_best_ant_mutex);
 }

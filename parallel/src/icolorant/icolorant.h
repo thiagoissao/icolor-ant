@@ -67,6 +67,7 @@
 #define __ICOLORANT_H
 
 #include "../icolor.h"
+#include "../ant_fixed_k.h"
 
 #define COLORANT_ALPHA 2
 #define COLORANT_BETA 8
@@ -147,7 +148,8 @@ aco_t *aco_info;
 
 void colorant_malloc(void);
 void colorant_initialization(void);
-gcp_solution_t *execute_colorant(ant_t **local_ant);
+gcp_solution_t *execute_colorant(ant_t **local_ant,
+                                 ant_fixed_k_t **ant_fixed_k);
 
 gcp_solution_t *global_best_ant;
 pthread_mutex_t global_best_ant_mutex;
