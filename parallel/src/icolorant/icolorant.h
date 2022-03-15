@@ -148,8 +148,7 @@ aco_t *aco_info;
 
 void colorant_malloc(void);
 void colorant_initialization(void);
-gcp_solution_t *execute_colorant(ant_t **local_ant,
-                                 ant_fixed_k_t **ant_fixed_k);
+void execute_colorant(ant_t **local_ant, ant_fixed_k_t **ant_fixed_k);
 
 gcp_solution_t *global_best_ant;
 pthread_mutex_t global_best_ant_mutex;

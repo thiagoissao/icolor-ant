@@ -17,7 +17,7 @@
 #include "ant_fixed_k.h"
 #include "util.h"
 
-static int choose_vertex(
+int choose_vertex(
     int neighbors_by_color[problem->nof_vertices][problem->colors + 1],
     int *color_of) {
 
@@ -37,7 +37,7 @@ static int choose_vertex(
   return v;
 }
 
-static void calculate_probbs(
+void calculate_probbs(
     ant_fixed_k_t **ant_fixed_k, int v, int *color_of,
     int size_color[problem->colors],
     int neighbors_by_color[problem->nof_vertices][problem->colors + 1]) {
@@ -84,7 +84,7 @@ static void calculate_probbs(
   (*ant_fixed_k)->probb[problem->colors] = totalsum;
 }
 
-static int choose_color(ant_fixed_k_t **ant_fixed_k) {
+int choose_color(ant_fixed_k_t **ant_fixed_k) {
 
   int i;
   double p, last, div;

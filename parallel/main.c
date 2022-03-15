@@ -17,10 +17,6 @@ void find_global_best_ant(void *i) {
   ant_fixed_k_t *ant_fixed_k = NULL;
 
   execute_colorant(&local_ant, &ant_fixed_k);
-
-  pthread_mutex_lock(&global_best_ant_mutex);
-  global_best_ant = local_ant->best_ant;
-  pthread_mutex_unlock(&global_best_ant_mutex);
 }
 
 int main(int argc, char *argv[]) {
