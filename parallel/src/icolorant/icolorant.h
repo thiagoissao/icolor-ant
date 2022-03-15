@@ -68,6 +68,7 @@
 
 #include "../icolor.h"
 #include "../ant_fixed_k.h"
+#include "../tabucol.h"
 
 #define COLORANT_ALPHA 2
 #define COLORANT_BETA 8
@@ -148,7 +149,8 @@ aco_t *aco_info;
 
 void colorant_malloc(void);
 void colorant_initialization(void);
-void execute_colorant(ant_t **local_ant, ant_fixed_k_t **ant_fixed_k);
+void execute_colorant(ant_t **local_ant, ant_fixed_k_t **ant_fixed_k,
+                      tabucol_conflicts_t **tabucol_conflicts);
 
 gcp_solution_t *global_best_ant;
 pthread_mutex_t global_best_ant_mutex;

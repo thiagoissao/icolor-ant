@@ -14,10 +14,11 @@
 #include <pthread.h>
 
 #include "icolorant.h"
-#include "icolorant.utils.h"
 #include "../tabucol.h"
 #include "../ant_fixed_k.h"
 #include "../util.h"
+#include "../tabucol.h"
+#include "icolorant.utils.h"
 
 void colorant_malloc(void) {
 
@@ -274,15 +275,21 @@ void update_pheromone_trails_scheme_3(int cycle, gcp_solution_t *local_best_ant,
 
 /* END Functions to help updating pheromone */
 
-void construct_solutions(int cycle, ant_t **local_ant,
-                         ant_fixed_k_t **fixed_k) {
-
+void construct_solutions(int cycle, ant_t **local_ant, ant_fixed_k_t **fixed_k,
+                         tabucol_conflicts_t **tabucol_conflicts) {
+  (*tabucol_conflicts) = malloc_(sizeof(tabucol_conflicts_t));
+  (*tabucol_conflicts)->conf_position = NULL;
+  (*tabucol_conflicts)->conflicts = NULL;
+  (*tabucol_conflicts)->nodes_in_conflict = NULL;
+  (*tabucol_conflicts)->tabu_status = NULL;
   aco_memory_t *memory = NULL;
   gcp_solution_t *ant_memory;
   int k;
   int ants = aco_info->ants;
+
   (*local_ant)->best_colony->f1 = INT_MAX * 1.0;
   for (k = 0; k < ants; k++) {
+
     (*local_ant)->ant_k->total_cycles = cycle;
 
     ant_fixed_k(fixed_k, (*local_ant)->ant_k, (*local_ant)->pheromones);
@@ -294,7 +301,8 @@ void construct_solutions(int cycle, ant_t **local_ant,
 #if defined DEBUG
       // fprintf(stderr, "FLAG_TABUCOL_ALL_ANTS\n");
 #endif
-      tabucol((*local_ant)->ant_k, tabucol_info->cycles,
+
+      tabucol(tabucol_conflicts, (*local_ant)->ant_k, tabucol_info->cycles,
               tabucol_info->tl_style);
     }
 
@@ -323,7 +331,7 @@ void construct_solutions(int cycle, ant_t **local_ant,
     fprintf(stderr, "FLAG_TABUCOL_BEST_ANT\n");
 #endif
     printf("CHEGUEI AQUI ciclo: %i\n", cycle);
-    tabucol((*local_ant)->best_colony, tabucol_info->cycles,
+    tabucol(tabucol_conflicts, (*local_ant)->best_colony, tabucol_info->cycles,
             tabucol_info->tl_style);
     printf("SEMPRE CHEGA AQUI ciclo: %i\n", cycle);
     (*local_ant)->best_colony->spent_time =
@@ -339,7 +347,8 @@ void construct_solutions(int cycle, ant_t **local_ant,
   }
 }
 
-void execute_colorant(ant_t **local_ant, ant_fixed_k_t **ant_fixed_k) {
+void execute_colorant(ant_t **local_ant, ant_fixed_k_t **ant_fixed_k,
+                      tabucol_conflicts_t **tabucol_conflicts) {
 
   int cycle = 0;
   int converg = 0;
@@ -347,9 +356,7 @@ void execute_colorant(ant_t **local_ant, ant_fixed_k_t **ant_fixed_k) {
   int cycle_phero = 0;
 
   (*local_ant) = initialize_data();
-  printf("NUMERO DE VÉRTICES: %f\n", (*local_ant)->best_ant->spent_time_ls);
   (*ant_fixed_k) = afk_initialize_data(aco_info->alpha, aco_info->beta);
-  printf("ALPHA: %f\n", (*ant_fixed_k)->alpha);
   (*local_ant)->best_ant->stop_criterion = 0;
 
   while (!terminate_conditions((*local_ant)->best_ant, cycle, converg)) {
@@ -358,7 +365,7 @@ void execute_colorant(ant_t **local_ant, ant_fixed_k_t **ant_fixed_k) {
     converg = converg + 1;
     cycle_phero = cycle_phero + 1;
 
-    construct_solutions(cycle, local_ant, ant_fixed_k);
+    construct_solutions(cycle, local_ant, ant_fixed_k, tabucol_conflicts);
     printf("CYCLE AFTER CONSTRUCT SOLUTIONS %i\n", cycle);
 
     if ((*local_ant)->best_colony->nof_confl_vertices <

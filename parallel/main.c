@@ -15,8 +15,9 @@
 void find_global_best_ant(void *i) {
   ant_t *local_ant = NULL;
   ant_fixed_k_t *ant_fixed_k = NULL;
+  tabucol_conflicts_t *tabucol_conflicts = NULL;
 
-  execute_colorant(&local_ant, &ant_fixed_k);
+  execute_colorant(&local_ant, &ant_fixed_k, &tabucol_conflicts);
 }
 
 int main(int argc, char *argv[]) {
