@@ -11,6 +11,7 @@
     "icolorant.h": "c",
     "icolorant.utils.h": "c",
     "util.h": "c",
-    "ant_fixed_k.h": "c"
+    "ant_fixed_k.h": "c",
+    "tabucol.h": "c"
   }
 }

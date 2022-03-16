@@ -10,19 +10,14 @@
 #include "./src/helpers.h"
 #include "./src/tabucol.h"
 #include "./src/util.h"
-#include "./main.h"
+#include "./src/ant_fixed_k.h"
 
 void find_global_best_ant(void *i) {
   ant_t *local_ant = NULL;
-  int cycle = 0;
-  int converg = 0;
-  int change = 0;
-  int cycle_phero = 0;
-  pthread_mutex_lock(&global_best_ant_mutex);
-  execute_colorant(&local_ant, &cycle, &converg, &change, &cycle_phero);
+  ant_fixed_k_t *ant_fixed_k = NULL;
+  tabucol_conflicts_t *tabucol_conflicts = NULL;
 
-  global_best_ant = local_ant->best_ant;
-  pthread_mutex_unlock(&global_best_ant_mutex);
+  execute_colorant(&local_ant, &ant_fixed_k, &tabucol_conflicts);
 }
 
 int main(int argc, char *argv[]) {
@@ -94,7 +89,6 @@ int main(int argc, char *argv[]) {
 #endif
 
   workers = malloc(aco_info->threads * sizeof(pthread_t));
-  local_ants = malloc_(aco_info->threads * sizeof(ant_t *));
   pthread_mutex_init(&global_best_ant_mutex, NULL);
 
   printbanner();

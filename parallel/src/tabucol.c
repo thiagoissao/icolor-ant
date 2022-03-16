@@ -103,38 +103,35 @@ void tabucol_malloc(void) {
 
 void tabucol_show_solution(void) { return; }
 
-/* Number of conflicts for each color and node: (k+1)x(n+1) */
-static int **conflicts = NULL;
-/* Tabu status for each color and node: (k+1)x(n) */
-static int **tabu_status = NULL;
-/* Nodes that have conflicts. Position 0 keeps quantity: (k+1)x(n+1) */
-static int *nodes_in_conflict = NULL;
-/* Index of nodes in array nodes_in_conflicts */
-static int *conf_position = NULL;
-
-static void initialize_arrays(gcp_solution_t *solution) {
+void initialize_arrays(gcp_solution_t *solution,
+                       tabucol_conflicts_t **tabucol_conflicts) {
 
   int i, j, n;
+  if ((*tabucol_conflicts)->nodes_in_conflict == NULL) {
+    (*tabucol_conflicts)->nodes_in_conflict =
+        malloc_(sizeof(int) * (problem->nof_vertices + 1));
+    (*tabucol_conflicts)->conf_position =
+        malloc_(sizeof(int) * problem->nof_vertices);
 
-  if (nodes_in_conflict == NULL) {
-    nodes_in_conflict = malloc_(sizeof(int) * (problem->nof_vertices + 1));
-    conf_position = malloc_(sizeof(int) * problem->nof_vertices);
-
-    conflicts = malloc_(sizeof(int *) * (problem->colors + 1));
-    tabu_status = malloc_(sizeof(int *) * (problem->colors + 1));
+    (*tabucol_conflicts)->conflicts =
+        malloc_(sizeof(int *) * (problem->colors + 1));
+    (*tabucol_conflicts)->tabu_status =
+        malloc_(sizeof(int *) * (problem->colors + 1));
 
     for (i = 0; i <= problem->colors; i++) {
-      conflicts[i] = malloc_(sizeof(int) * (problem->nof_vertices + 1));
-      tabu_status[i] = malloc_(sizeof(int) * problem->nof_vertices);
+      (*tabucol_conflicts)->conflicts[i] =
+          malloc_(sizeof(int) * (problem->nof_vertices + 1));
+      (*tabucol_conflicts)->tabu_status[i] =
+          malloc_(sizeof(int) * problem->nof_vertices);
     }
   }
 
   for (i = 0; i <= problem->colors; i++) {
     for (j = 0; j < problem->nof_vertices; j++) {
-      conflicts[i][j] = 0;
-      tabu_status[i][j] = 0;
+      (*tabucol_conflicts)->conflicts[i][j] = 0;
+      (*tabucol_conflicts)->tabu_status[i][j] = 0;
     }
-    conflicts[i][problem->nof_vertices] = 0;
+    (*tabucol_conflicts)->conflicts[i][problem->nof_vertices] = 0;
   }
 
   /* Initializing the conflicts array */
@@ -142,22 +139,22 @@ static void initialize_arrays(gcp_solution_t *solution) {
     for (i = 0; i < problem->nof_vertices; i++) {
       for (j = 1; j <= problem->adj_list[i][0]; j++) {
         n = problem->adj_list[i][j];
-        conflicts[solution->color_of[n]][i]++;
+        (*tabucol_conflicts)->conflicts[solution->color_of[n]][i]++;
       }
     }
   } else if (get_flag(problem->flags, FLAG_ADJ_MATRIX)) {
     for (i = 0; i < problem->nof_vertices; i++) {
       for (j = 0; j < problem->nof_vertices; j++) {
         if (problem->adj_matrix[i][j])
-          conflicts[solution->color_of[j]][i]++;
+          (*tabucol_conflicts)->conflicts[solution->color_of[j]][i]++;
       }
     }
   }
 }
 
-static void neighbor_solution(int best_node, int best_color,
-                              gcp_solution_t *solution, int total_it,
-                              int t_tenure) {
+void neighbor_solution(tabucol_conflicts_t **tabucol_conflicts, int best_node,
+                       int best_color, gcp_solution_t *solution, int total_it,
+                       int t_tenure) {
 
   int j, last, n;
   int old_color;
@@ -182,19 +179,27 @@ static void neighbor_solution(int best_node, int best_color,
 
   /* If <old_color> was a conflict and <best_color> is not, remove <best_node>
    * from the list of conflicting nodes */
-  if (conflicts[old_color][best_node] && !(conflicts[best_color][best_node])) {
-    last = nodes_in_conflict[nodes_in_conflict[0]];
-    conf_position[last] = conf_position[best_node];
-    nodes_in_conflict[conf_position[best_node]] =
-        nodes_in_conflict[nodes_in_conflict[0]--];
+  if ((*tabucol_conflicts)->conflicts[old_color][best_node] &&
+      !((*tabucol_conflicts)->conflicts[best_color][best_node])) {
+    last = (*tabucol_conflicts)
+               ->nodes_in_conflict[(*tabucol_conflicts)->nodes_in_conflict[0]];
+    (*tabucol_conflicts)->conf_position[last] =
+        (*tabucol_conflicts)->conf_position[best_node];
+    (*tabucol_conflicts)
+        ->nodes_in_conflict[(*tabucol_conflicts)->conf_position[best_node]] =
+        (*tabucol_conflicts)
+            ->nodes_in_conflict[(*tabucol_conflicts)->nodes_in_conflict[0]--];
   } else {
     /* If <old_color> was not a conflict and <best_color> is, put
      * <best_node> in the list */
-    if (!(conflicts[old_color][best_node]) &&
-        conflicts[best_color][best_node]) {
-      nodes_in_conflict[0]++;
-      conf_position[best_node] = nodes_in_conflict[0];
-      nodes_in_conflict[conf_position[best_node]] = best_node;
+    if (!((*tabucol_conflicts)->conflicts[old_color][best_node]) &&
+        (*tabucol_conflicts)->conflicts[best_color][best_node]) {
+      (*tabucol_conflicts)->nodes_in_conflict[0]++;
+      (*tabucol_conflicts)->conf_position[best_node] =
+          (*tabucol_conflicts)->nodes_in_conflict[0];
+      (*tabucol_conflicts)
+          ->nodes_in_conflict[(*tabucol_conflicts)->conf_position[best_node]] =
+          best_node;
     }
   }
 
@@ -205,27 +210,36 @@ static void neighbor_solution(int best_node, int best_color,
       n = problem->adj_list[best_node][j];
 
       /* Decrease the number of conflicts in the old color */
-      conflicts[old_color][n]--;
+      (*tabucol_conflicts)->conflicts[old_color][n]--;
 
-      if (conflicts[old_color][n] == 0 && solution->color_of[n] == old_color) {
+      if ((*tabucol_conflicts)->conflicts[old_color][n] == 0 &&
+          solution->color_of[n] == old_color) {
         /* Remove <n> from the list of conflicting nodes if there are 0
          * conflicts in its own color */
-        last = nodes_in_conflict[nodes_in_conflict[0]];
-        conf_position[last] = conf_position[n];
-        nodes_in_conflict[conf_position[n]] =
-            nodes_in_conflict[nodes_in_conflict[0]--];
+        last =
+            (*tabucol_conflicts)
+                ->nodes_in_conflict[(*tabucol_conflicts)->nodes_in_conflict[0]];
+        (*tabucol_conflicts)->conf_position[last] =
+            (*tabucol_conflicts)->conf_position[n];
+        (*tabucol_conflicts)
+            ->nodes_in_conflict[(*tabucol_conflicts)->conf_position[n]] =
+            (*tabucol_conflicts)
+                ->nodes_in_conflict[(*tabucol_conflicts)
+                                        ->nodes_in_conflict[0]--];
       }
 
       /* Increase the number of conflicts in the new color */
-      conflicts[best_color][n]++;
+      (*tabucol_conflicts)->conflicts[best_color][n]++;
 
-      if (conflicts[best_color][n] == 1 &&
+      if ((*tabucol_conflicts)->conflicts[best_color][n] == 1 &&
           solution->color_of[n] == best_color) {
         /* Add <n> in the list conflicting nodes if there is a new
          * conflict in its own color */
-        nodes_in_conflict[0]++;
-        conf_position[n] = nodes_in_conflict[0];
-        nodes_in_conflict[conf_position[n]] = n;
+        (*tabucol_conflicts)->nodes_in_conflict[0]++;
+        (*tabucol_conflicts)->conf_position[n] =
+            (*tabucol_conflicts)->nodes_in_conflict[0];
+        (*tabucol_conflicts)
+            ->nodes_in_conflict[(*tabucol_conflicts)->conf_position[n]] = n;
       }
     }
   } else if (get_flag(problem->flags, FLAG_ADJ_MATRIX)) {
@@ -233,56 +247,65 @@ static void neighbor_solution(int best_node, int best_color,
       if (problem->adj_matrix[best_node][n]) {
 
         /* Decrease the number of conflicts in the old color */
-        conflicts[old_color][n]--;
+        (*tabucol_conflicts)->conflicts[old_color][n]--;
 
-        if (conflicts[old_color][n] == 0 &&
+        if ((*tabucol_conflicts)->conflicts[old_color][n] == 0 &&
             solution->color_of[n] == old_color) {
           /* Remove <n> from the list of conflicting nodes if there are 0
            * conflicts in its own color */
-          last = nodes_in_conflict[nodes_in_conflict[0]];
-          conf_position[last] = conf_position[n];
-          nodes_in_conflict[conf_position[n]] =
-              nodes_in_conflict[nodes_in_conflict[0]--];
+          last = (*tabucol_conflicts)
+                     ->nodes_in_conflict[(*tabucol_conflicts)
+                                             ->nodes_in_conflict[0]];
+          (*tabucol_conflicts)->conf_position[last] =
+              (*tabucol_conflicts)->conf_position[n];
+          (*tabucol_conflicts)
+              ->nodes_in_conflict[(*tabucol_conflicts)->conf_position[n]] =
+              (*tabucol_conflicts)
+                  ->nodes_in_conflict[(*tabucol_conflicts)
+                                          ->nodes_in_conflict[0]--];
         }
 
         /* Increase the number of conflicts in the new color */
-        conflicts[best_color][n]++;
+        (*tabucol_conflicts)->conflicts[best_color][n]++;
 
-        if (conflicts[best_color][n] == 1 &&
+        if ((*tabucol_conflicts)->conflicts[best_color][n] == 1 &&
             solution->color_of[n] == best_color) {
           /* Add <n> in the list conflicting nodes if there is a new
            * conflict in its own color */
-          nodes_in_conflict[0]++;
-          conf_position[n] = nodes_in_conflict[0];
-          nodes_in_conflict[conf_position[n]] = n;
+          (*tabucol_conflicts)->nodes_in_conflict[0]++;
+          (*tabucol_conflicts)->conf_position[n] =
+              (*tabucol_conflicts)->nodes_in_conflict[0];
+          (*tabucol_conflicts)
+              ->nodes_in_conflict[(*tabucol_conflicts)->conf_position[n]] = n;
         }
       }
     }
   }
 
   /* Set the tabu status */
-  tabu_status[old_color][best_node] = total_it + t_tenure;
+  (*tabucol_conflicts)->tabu_status[old_color][best_node] = total_it + t_tenure;
 }
 
-static void free_(void) {
+void free_(tabucol_conflicts_t **tabucol_conflicts) {
   int i;
   for (i = 0; i <= problem->colors; i++) {
-    free(conflicts[i]);
-    free(tabu_status[i]);
+    free((*tabucol_conflicts)->conflicts[i]);
+    free((*tabucol_conflicts)->tabu_status[i]);
   }
 
-  free(nodes_in_conflict);
-  free(conf_position);
-  free(conflicts);
-  free(tabu_status);
+  free((*tabucol_conflicts)->nodes_in_conflict);
+  free((*tabucol_conflicts)->conf_position);
+  free((*tabucol_conflicts)->conflicts);
+  free((*tabucol_conflicts)->tabu_status);
 
-  conflicts = NULL;
-  tabu_status = NULL;
-  nodes_in_conflict = NULL;
-  conf_position = NULL;
+  (*tabucol_conflicts)->conflicts = NULL;
+  (*tabucol_conflicts)->tabu_status = NULL;
+  (*tabucol_conflicts)->nodes_in_conflict = NULL;
+  (*tabucol_conflicts)->conf_position = NULL;
 }
 
-void tabucol(gcp_solution_t *solution, int max_cycles, int type_of_tl) {
+void tabucol(tabucol_conflicts_t **tabucol_conflicts, gcp_solution_t *solution,
+             int max_cycles, int type_of_tl) {
 
 #if defined DEBUG
   fprintf(stderr, "[INICIO] tabucol_info->tl_style: %i. %i\n",
@@ -318,17 +341,20 @@ void tabucol(gcp_solution_t *solution, int max_cycles, int type_of_tl) {
 
   double time_initial_ls = 0;
 
-  initialize_arrays(solution);
+  initialize_arrays(solution, tabucol_conflicts);
 
   /* Count the number of conflicts and set up the list nodes_in_conflict
    * with the associated list conf_position */
-  nodes_in_conflict[0] = 0;
+  (*tabucol_conflicts)->nodes_in_conflict[0] = 0;
   for (i = 0; i < problem->nof_vertices; i++) {
-    if (conflicts[solution->color_of[i]][i] > 0) {
-      total_conflicts += conflicts[solution->color_of[i]][i];
-      nodes_in_conflict[0]++;
-      conf_position[i] = nodes_in_conflict[0];
-      nodes_in_conflict[conf_position[i]] = i;
+    if ((*tabucol_conflicts)->conflicts[solution->color_of[i]][i] > 0) {
+      total_conflicts +=
+          (*tabucol_conflicts)->conflicts[solution->color_of[i]][i];
+      (*tabucol_conflicts)->nodes_in_conflict[0]++;
+      (*tabucol_conflicts)->conf_position[i] =
+          (*tabucol_conflicts)->nodes_in_conflict[0];
+      (*tabucol_conflicts)
+          ->nodes_in_conflict[(*tabucol_conflicts)->conf_position[i]] = i;
     }
   }
   total_conflicts /= 2;
@@ -342,14 +368,14 @@ void tabucol(gcp_solution_t *solution, int max_cycles, int type_of_tl) {
     fprintf(problem->fileout,
             "Tabucol: arrays initialized; edges in conflict = %d\n, vertices "
             "in conflict = %d\n",
-            total_conflicts, nodes_in_conflict[0]);
+            total_conflicts, (*tabucol_conflicts)->nodes_in_conflict[0]);
   }
 
   time_initial_ls = current_time_secs(TIME_INITIAL, 0);
 
   while (TRUE) {
 
-    nc = nodes_in_conflict[0];
+    nc = (*tabucol_conflicts)->nodes_in_conflict[0];
     total_it++;
     iteration++;
 
@@ -357,17 +383,18 @@ void tabucol(gcp_solution_t *solution, int max_cycles, int type_of_tl) {
     best_color = -1;
     best_value = problem->nof_vertices * problem->nof_vertices;
 
-    for (i = 1; i <= nodes_in_conflict[0]; i++) {
-      node = nodes_in_conflict[i];
+    for (i = 1; i <= (*tabucol_conflicts)->nodes_in_conflict[0]; i++) {
+      node = (*tabucol_conflicts)->nodes_in_conflict[i];
 
       /* Try for every node in conflict to move it to every color */
       for (c = 0; c < problem->colors; c++) {
         if (c != solution->color_of[node]) {
-          new_value = total_conflicts + conflicts[c][node] -
-                      conflicts[solution->color_of[node]][node];
+          new_value =
+              total_conflicts + (*tabucol_conflicts)->conflicts[c][node] -
+              (*tabucol_conflicts)->conflicts[solution->color_of[node]][node];
           /* Take the new move with minimum value of new conflicts */
           if (new_value <= best_value) {
-            if ((tabu_status[c][node] < total_it) ||
+            if (((*tabucol_conflicts)->tabu_status[c][node] < total_it) ||
                 (new_value < best_solution_value)) {
               best_node = node;
               best_color = c;
@@ -388,7 +415,7 @@ void tabucol(gcp_solution_t *solution, int max_cycles, int type_of_tl) {
       RANDOM(problem->seed, problem->buffer, best_node, int,
              problem->nof_vertices);
 #endif
-      while (conf_position[best_node] == 0) {
+      while ((*tabucol_conflicts)->conf_position[best_node] == 0) {
 #if defined LRAND
         // best_node = RANDOM(problem->nof_vertices);
         RANDOM(problem->buffer, best_node, int, problem->nof_vertices);
@@ -420,12 +447,15 @@ void tabucol(gcp_solution_t *solution, int max_cycles, int type_of_tl) {
                problem->nof_vertices);
 #endif
       }
-      best_value = total_conflicts + conflicts[best_color][best_node] -
-                   conflicts[solution->color_of[best_node]][best_node];
+      best_value = total_conflicts +
+                   (*tabucol_conflicts)->conflicts[best_color][best_node] -
+                   (*tabucol_conflicts)
+                       ->conflicts[solution->color_of[best_node]][best_node];
     }
 
     /* Execute the move */
-    neighbor_solution(best_node, best_color, solution, total_it, tabu_tenure);
+    neighbor_solution(tabucol_conflicts, best_node, best_color, solution,
+                      total_it, tabu_tenure);
 
     total_conflicts = best_value;
 
@@ -433,9 +463,12 @@ void tabucol(gcp_solution_t *solution, int max_cycles, int type_of_tl) {
       fprintf(problem->fileout,
               "Tabucol: move executed = (%d,%d); edges in conflict = %d; "
               "vertices in conflict = %d\n",
-              best_node + 1, best_color, total_conflicts, nodes_in_conflict[0]);
-      fprintf(problem->fileout, "\tCycle = %d; best solution so far = %d\n",
-              total_it, nodes_in_conflict[0] /*best_solution_value*/);
+              best_node + 1, best_color, total_conflicts,
+              (*tabucol_conflicts)->nodes_in_conflict[0]);
+      fprintf(
+          problem->fileout, "\tCycle = %d; best solution so far = %d\n",
+          total_it,
+          (*tabucol_conflicts)->nodes_in_conflict[0] /*best_solution_value*/);
     }
 
     /* Calculating tabu_tenure: */
@@ -557,11 +590,11 @@ void tabucol(gcp_solution_t *solution, int max_cycles, int type_of_tl) {
   }
 
   solution->nof_confl_edges = total_conflicts;
-  solution->nof_confl_vertices = nodes_in_conflict[0];
+  solution->nof_confl_vertices = (*tabucol_conflicts)->nodes_in_conflict[0];
   solution->spent_time = current_time_secs(TIME_FINAL, time_initial);
   tabucol_info->spent_time += current_time_secs(TIME_FINAL, time_initial_ls);
   solution->spent_time_ls = tabucol_info->spent_time;
   solution->total_cycles = total_it;
 
-  free_();
+  free_(tabucol_conflicts);
 }

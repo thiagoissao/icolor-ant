@@ -11,12 +11,14 @@
 #include <string.h>
 #include <math.h>
 #include <limits.h>
+#include <pthread.h>
 
 #include "icolorant.h"
-#include "icolorant.utils.h"
 #include "../tabucol.h"
 #include "../ant_fixed_k.h"
 #include "../util.h"
+#include "../tabucol.h"
+#include "icolorant.utils.h"
 
 void colorant_malloc(void) {
 
@@ -57,7 +59,7 @@ void colorant_initialization(void) {
   }
 }
 
-static int memory_length(aco_memory_t *memory) {
+int memory_length(aco_memory_t *memory) {
   aco_memory_t *item = memory;
   int length = 0;
   for (; item != NULL; item = item->tail, length++)
@@ -65,18 +67,18 @@ static int memory_length(aco_memory_t *memory) {
   return length;
 }
 
-static void insert_into_memory(gcp_solution_t *sol,
-                               gcp_solution_t *local_ant_memory_insert,
-                               gcp_solution_t *local_ant_memory_remove,
-                               aco_memory_t *memory) {
+void insert_into_memory(gcp_solution_t *solution,
+                        gcp_solution_t *local_ant_memory_insert,
+                        gcp_solution_t *local_ant_memory_remove,
+                        aco_memory_t *memory) {
   aco_memory_t *item = malloc_(sizeof(aco_memory_t *));
   aco_memory_t *last, *previous;
 
-  item->head = sol;
+  item->head = solution;
   item->tail = memory;
   memory = item;
 
-  cpy_solution(sol, local_ant_memory_insert);
+  cpy_solution(solution, local_ant_memory_insert);
 
   if (aco_info->memory_size < memory_length(memory)) {
     last = memory->tail;
@@ -140,15 +142,12 @@ struct ant_t *initialize_data() {
     local_ant->ant_memory_insert->nof_colors = problem->colors;
     local_ant->ant_memory_insert->spent_time_ls = 0;
   }
-
-  afk_initialize_data(aco_info->alpha, aco_info->beta);
   return local_ant;
 }
 
-static void
-update_pheromone_trails_memory(gcp_solution_t *local_ant_memory_insert,
-                               gcp_solution_t *local_ant_memory_remove,
-                               double **pheromone) {
+void update_pheromone_trails_memory(gcp_solution_t *local_ant_memory_insert,
+                                    gcp_solution_t *local_ant_memory_remove,
+                                    double **pheromone) {
   int i, j;
 
   for (i = 0; i < problem->nof_vertices; i++) {
@@ -168,7 +167,7 @@ update_pheromone_trails_memory(gcp_solution_t *local_ant_memory_insert,
   }
 }
 
-static void update_var_phero(gcp_solution_t *solution, double **phero_var) {
+void update_var_phero(gcp_solution_t *solution, double **phero_var) {
 
   int i, j;
 
@@ -184,10 +183,9 @@ static void update_var_phero(gcp_solution_t *solution, double **phero_var) {
   }
 }
 
-static void update_pheromone_trails_scheme_1(gcp_solution_t *local_best_ant,
-                                             gcp_solution_t *local_best_colony,
-                                             double **pheromone,
-                                             double **phero_var) {
+void update_pheromone_trails_scheme_1(gcp_solution_t *local_best_ant,
+                                      gcp_solution_t *local_best_colony,
+                                      double **pheromone, double **phero_var) {
 
   int i, j;
 
@@ -216,27 +214,11 @@ static void update_pheromone_trails_scheme_1(gcp_solution_t *local_best_ant,
   }
 }
 
-static void update_pheromone_trails_scheme_2(gcp_solution_t *local_best_ant,
-                                             gcp_solution_t *local_best_colony,
-                                             double **pheromone) {
-
-  int i, j;
-
-#if defined DEBUG
-  fprintf(stderr, "update_pheromone_trails_scheme_2.\n");
-#endif
-
-  /*
-  fprintf(problem->fileout, "ANTES\n");
-  for (i = 0; i < problem->nof_vertices; i++) {
-    for (j = 0; j < problem->nof_vertices; j++) {
-      fprintf(problem->fileout, "%.2f, ", pheromone[i][j]);
-    }
-    fprintf(problem->fileout, "\n");
-  }
-  */
-  for (i = 0; i < problem->nof_vertices; i++) {
-    for (j = 0; j < problem->nof_vertices; j++) {
+void update_pheromone_trails_scheme_2(gcp_solution_t *local_best_ant,
+                                      gcp_solution_t *local_best_colony,
+                                      double **pheromone) {
+  for (int i = 0; i < problem->nof_vertices; i++) {
+    for (int j = 0; j < problem->nof_vertices; j++) {
       pheromone[i][j] *= aco_info->rho;
       if (!problem->adj_matrix[i][j]) {
         if (local_best_ant->color_of[i] == local_best_ant->color_of[j]) {
@@ -252,24 +234,14 @@ static void update_pheromone_trails_scheme_2(gcp_solution_t *local_best_ant,
       }
     }
   }
-  /*
-  fprintf(problem->fileout, "DEPOIS\n");
-  for (i = 0; i < problem->nof_vertices; i++) {
-    for (j = 0; j < problem->nof_vertices; j++) {
-      fprintf(problem->fileout, "%.2f, ", pheromone[i][j]);
-    }
-    fprintf(problem->fileout, "\n");
-  }
-  */
 }
 
-static void update_pheromone_trails_scheme_3(int cycle,
-                                             gcp_solution_t *local_best_ant,
-                                             gcp_solution_t *local_best_colony,
-                                             double **pheromone) {
+void update_pheromone_trails_scheme_3(int cycle, gcp_solution_t *local_best_ant,
+                                      gcp_solution_t *local_best_colony,
+                                      double **pheromone) {
 
   int i, j;
-  static int gap;
+  int gap = 0;
 
 #if defined DEBUG
   fprintf(stderr, "update_pheromone_trails_scheme_3.\n");
@@ -303,18 +275,24 @@ static void update_pheromone_trails_scheme_3(int cycle,
 
 /* END Functions to help updating pheromone */
 
-static void construct_solutions(int cycle, ant_t **local_ant) {
-
+void construct_solutions(int cycle, ant_t **local_ant, ant_fixed_k_t **fixed_k,
+                         tabucol_conflicts_t **tabucol_conflicts) {
+  (*tabucol_conflicts) = malloc_(sizeof(tabucol_conflicts_t));
+  (*tabucol_conflicts)->conf_position = NULL;
+  (*tabucol_conflicts)->conflicts = NULL;
+  (*tabucol_conflicts)->nodes_in_conflict = NULL;
+  (*tabucol_conflicts)->tabu_status = NULL;
   aco_memory_t *memory = NULL;
   gcp_solution_t *ant_memory;
   int k;
   int ants = aco_info->ants;
-  (*local_ant)->best_colony->f1 = INT_MAX * 1.0;
 
+  (*local_ant)->best_colony->f1 = INT_MAX * 1.0;
   for (k = 0; k < ants; k++) {
+
     (*local_ant)->ant_k->total_cycles = cycle;
 
-    ant_fixed_k((*local_ant)->ant_k, (*local_ant)->pheromones);
+    ant_fixed_k(fixed_k, (*local_ant)->ant_k, (*local_ant)->pheromones);
 
     /* Apply local search in all ants */
     if (get_flag(problem->flags, FLAG_TABUCOL_ALL_ANTS) &&
@@ -323,7 +301,8 @@ static void construct_solutions(int cycle, ant_t **local_ant) {
 #if defined DEBUG
       // fprintf(stderr, "FLAG_TABUCOL_ALL_ANTS\n");
 #endif
-      tabucol((*local_ant)->ant_k, tabucol_info->cycles,
+
+      tabucol(tabucol_conflicts, (*local_ant)->ant_k, tabucol_info->cycles,
               tabucol_info->tl_style);
     }
 
@@ -351,8 +330,10 @@ static void construct_solutions(int cycle, ant_t **local_ant) {
 #if defined DEBUG
     fprintf(stderr, "FLAG_TABUCOL_BEST_ANT\n");
 #endif
-    tabucol((*local_ant)->best_colony, tabucol_info->cycles,
+    printf("CHEGUEI AQUI ciclo: %i\n", cycle);
+    tabucol(tabucol_conflicts, (*local_ant)->best_colony, tabucol_info->cycles,
             tabucol_info->tl_style);
+    printf("SEMPRE CHEGA AQUI ciclo: %i\n", cycle);
     (*local_ant)->best_colony->spent_time =
         current_time_secs(TIME_FINAL, time_initial);
   }
@@ -366,28 +347,35 @@ static void construct_solutions(int cycle, ant_t **local_ant) {
   }
 }
 
-gcp_solution_t *execute_colorant(ant_t **local_ant, int *cycle, int *converg,
-                                 int *change, int *cycle_phero) {
+void execute_colorant(ant_t **local_ant, ant_fixed_k_t **ant_fixed_k,
+                      tabucol_conflicts_t **tabucol_conflicts) {
+
+  int cycle = 0;
+  int converg = 0;
+  int change = 0;
+  int cycle_phero = 0;
 
   (*local_ant) = initialize_data();
+  (*ant_fixed_k) = afk_initialize_data(aco_info->alpha, aco_info->beta);
   (*local_ant)->best_ant->stop_criterion = 0;
 
-  while (!terminate_conditions((*local_ant)->best_ant, *cycle, *converg)) {
+  while (!terminate_conditions((*local_ant)->best_ant, cycle, converg)) {
 
-    *cycle = *cycle + 1;
-    *converg = *converg + 1;
-    *cycle_phero = *cycle_phero + 1;
+    cycle = cycle + 1;
+    converg = converg + 1;
+    cycle_phero = cycle_phero + 1;
 
-    construct_solutions(*cycle, local_ant);
+    construct_solutions(cycle, local_ant, ant_fixed_k, tabucol_conflicts);
+    printf("CYCLE AFTER CONSTRUCT SOLUTIONS %i\n", cycle);
 
     if ((*local_ant)->best_colony->nof_confl_vertices <
         (*local_ant)->best_ant->nof_confl_vertices) {
       cpy_solution((*local_ant)->best_colony, (*local_ant)->best_ant);
-      (*local_ant)->best_ant->cycles_to_best = *cycle;
+      (*local_ant)->best_ant->cycles_to_best = cycle;
       (*local_ant)->best_ant->time_to_best =
           (*local_ant)->best_colony->spent_time;
-      *converg = 0;
-      *change = 1;
+      converg = 0;
+      change = 1;
     }
 
     switch (aco_info->pheromone_scheme) {
@@ -402,7 +390,7 @@ gcp_solution_t *execute_colorant(ant_t **local_ant, int *cycle, int *converg,
                                        (*local_ant)->pheromones);
       break;
     case PHEROMONE_SCHEME_3:
-      update_pheromone_trails_scheme_3(*cycle, (*local_ant)->best_ant,
+      update_pheromone_trails_scheme_3(cycle, (*local_ant)->best_ant,
                                        (*local_ant)->best_colony,
                                        (*local_ant)->pheromones);
       break;
@@ -416,7 +404,7 @@ gcp_solution_t *execute_colorant(ant_t **local_ant, int *cycle, int *converg,
 
     if (get_flag(problem->flags, FLAG_VERBOSE)) {
       fprintf(problem->fileout,
-              "Cycle %d - Conflicts found: %d (edges), %d (vertices)\n", *cycle,
+              "Cycle %d - Conflicts found: %d (edges), %d (vertices)\n", cycle,
               (*local_ant)->best_ant->nof_confl_edges,
               (*local_ant)->best_ant->nof_confl_vertices);
       fflush(stdout);
@@ -428,10 +416,10 @@ gcp_solution_t *execute_colorant(ant_t **local_ant, int *cycle, int *converg,
     }
 
     if (get_flag(problem->flags, FLAG_CHANGE_ALPHA_BETA) &&
-        ((*cycle % aco_info->iterations_alpha_beta) == 0)) {
+        ((cycle % aco_info->iterations_alpha_beta) == 0)) {
 
-      aco_info->gamma = *change ? (1 - aco_info->omega) * aco_info->gamma
-                                : (1 + aco_info->omega) * aco_info->gamma;
+      aco_info->gamma = change ? (1 - aco_info->omega) * aco_info->gamma
+                               : (1 + aco_info->omega) * aco_info->gamma;
 
       aco_info->alpha = aco_info->alpha_base * aco_info->gamma;
       aco_info->beta = aco_info->beta_base * (1 - aco_info->gamma);
@@ -444,30 +432,34 @@ gcp_solution_t *execute_colorant(ant_t **local_ant, int *cycle, int *converg,
       aco_info->alpha = aco_info->alpha_base * aco_info->gamma;
       aco_info->beta = aco_info->beta_base * (1 - aco_info->gamma);
 
-      *change = 0;
+      change = 0;
     }
 
     if ((get_flag(problem->flags, FLAG_DIFF_TABUCOL_SCHEME)) &&
-        ((*cycle % tabucol_info->diff_scheme_iterations) == 0)) {
+        ((cycle % tabucol_info->diff_scheme_iterations) == 0)) {
       tabucol_info->tl_style = tabucol_info->tl_style == TABUCOL_REACTIVE
                                    ? TABUCOL_DYNAMIC
                                    : TABUCOL_REACTIVE;
     }
     if ((get_flag(problem->flags, FLAG_CHANGE_PHEROMONE_SCHEME)) &&
-        (*converg >= aco_info->change_phero_scheme_iterations) &&
-        (*cycle_phero >= aco_info->change_phero_scheme_iterations)) {
+        (converg >= aco_info->change_phero_scheme_iterations) &&
+        (cycle_phero >= aco_info->change_phero_scheme_iterations)) {
 
       aco_info->pheromone_scheme++;
       if (aco_info->pheromone_scheme > 3)
         aco_info->pheromone_scheme = 1;
 
-      *cycle_phero = 0;
+      cycle_phero = 0;
     }
   }
 
   (*local_ant)->best_ant->spent_time =
       current_time_secs(TIME_FINAL, time_initial);
-  (*local_ant)->best_ant->total_cycles = *cycle;
+  (*local_ant)->best_ant->total_cycles = cycle;
 
-  return (*local_ant)->best_ant;
+  pthread_mutex_lock(&global_best_ant_mutex);
+  global_best_ant = (*local_ant)->best_ant;
+  pthread_mutex_unlock(&global_best_ant_mutex);
+
+  return;
 }
