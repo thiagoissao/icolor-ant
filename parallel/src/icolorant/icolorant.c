@@ -142,6 +142,7 @@ struct ant_t *initialize_data() {
     local_ant->ant_memory_insert->nof_colors = problem->colors;
     local_ant->ant_memory_insert->spent_time_ls = 0;
   }
+
   return local_ant;
 }
 
@@ -330,10 +331,8 @@ void construct_solutions(int cycle, ant_t **local_ant, ant_fixed_k_t **fixed_k,
 #if defined DEBUG
     fprintf(stderr, "FLAG_TABUCOL_BEST_ANT\n");
 #endif
-    printf("CHEGUEI AQUI ciclo: %i\n", cycle);
     tabucol(tabucol_conflicts, (*local_ant)->best_colony, tabucol_info->cycles,
             tabucol_info->tl_style);
-    printf("SEMPRE CHEGA AQUI ciclo: %i\n", cycle);
     (*local_ant)->best_colony->spent_time =
         current_time_secs(TIME_FINAL, time_initial);
   }
@@ -364,12 +363,12 @@ void execute_colorant(ant_t **local_ant, ant_fixed_k_t **ant_fixed_k,
     cycle = cycle + 1;
     converg = converg + 1;
     cycle_phero = cycle_phero + 1;
-
+    printf("cycle: %i\n", cycle);
     construct_solutions(cycle, local_ant, ant_fixed_k, tabucol_conflicts);
-    printf("CYCLE AFTER CONSTRUCT SOLUTIONS %i\n", cycle);
 
     if ((*local_ant)->best_colony->nof_confl_vertices <
         (*local_ant)->best_ant->nof_confl_vertices) {
+
       cpy_solution((*local_ant)->best_colony, (*local_ant)->best_ant);
       (*local_ant)->best_ant->cycles_to_best = cycle;
       (*local_ant)->best_ant->time_to_best =
@@ -378,19 +377,32 @@ void execute_colorant(ant_t **local_ant, ant_fixed_k_t **ant_fixed_k,
       change = 1;
     }
 
+    // atualizar a melhor global
+    if (global_best_ant->nof_confl_vertices >
+        (*local_ant)->best_ant->nof_confl_vertices) {
+      pthread_mutex_lock(&global_best_ant_mutex);
+      cpy_solution((*local_ant)->best_ant, global_best_ant);
+      global_best_ant->cycles_to_best = cycle;
+      printf("atualizando melhor global - conflitos: %i\n",
+             global_best_ant->nof_confl_vertices);
+      global_best_ant->time_to_best = (*local_ant)->best_ant->spent_time;
+      pthread_mutex_unlock(&global_best_ant_mutex);
+    }
+
+    //--------------BARREIRA----------------------
+
     switch (aco_info->pheromone_scheme) {
     case PHEROMONE_SCHEME_1:
       update_pheromone_trails_scheme_1(
-          (*local_ant)->best_ant, (*local_ant)->best_colony,
-          (*local_ant)->pheromones, (*local_ant)->phero_vars);
+          global_best_ant, (*local_ant)->best_colony, (*local_ant)->pheromones,
+          (*local_ant)->phero_vars);
       break;
     case PHEROMONE_SCHEME_2:
-      update_pheromone_trails_scheme_2((*local_ant)->best_ant,
-                                       (*local_ant)->best_colony,
-                                       (*local_ant)->pheromones);
+      update_pheromone_trails_scheme_2(
+          global_best_ant, (*local_ant)->best_colony, (*local_ant)->pheromones);
       break;
     case PHEROMONE_SCHEME_3:
-      update_pheromone_trails_scheme_3(cycle, (*local_ant)->best_ant,
+      update_pheromone_trails_scheme_3(cycle, global_best_ant,
                                        (*local_ant)->best_colony,
                                        (*local_ant)->pheromones);
       break;
@@ -405,13 +417,15 @@ void execute_colorant(ant_t **local_ant, ant_fixed_k_t **ant_fixed_k,
     if (get_flag(problem->flags, FLAG_VERBOSE)) {
       fprintf(problem->fileout,
               "Cycle %d - Conflicts found: %d (edges), %d (vertices)\n", cycle,
-              (*local_ant)->best_ant->nof_confl_edges,
-              (*local_ant)->best_ant->nof_confl_vertices);
+              global_best_ant->nof_confl_edges,
+              global_best_ant->nof_confl_vertices);
       fflush(stdout);
     }
 
-    if ((*local_ant)->best_ant->nof_confl_vertices == 0) {
-      (*local_ant)->best_ant->stop_criterion = STOP_BEST;
+    if (global_best_ant->nof_confl_vertices == 0) {
+      global_best_ant->spent_time = current_time_secs(TIME_FINAL, time_initial);
+      global_best_ant->total_cycles = cycle;
+      global_best_ant->stop_criterion = STOP_BEST;
       break;
     }
 
@@ -452,14 +466,6 @@ void execute_colorant(ant_t **local_ant, ant_fixed_k_t **ant_fixed_k,
       cycle_phero = 0;
     }
   }
-
-  (*local_ant)->best_ant->spent_time =
-      current_time_secs(TIME_FINAL, time_initial);
-  (*local_ant)->best_ant->total_cycles = cycle;
-
-  pthread_mutex_lock(&global_best_ant_mutex);
-  global_best_ant = (*local_ant)->best_ant;
-  pthread_mutex_unlock(&global_best_ant_mutex);
 
   return;
 }

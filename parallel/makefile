@@ -15,6 +15,9 @@ exec-small:
 exec-large: 
 	 ./colorant ../instances/dsjc250.5.col -p 3 -k 28 -c 1000 -w 4
 
+exec-extra-large: 
+	 ./colorant ../instances/dsjc500.1.col -p 3 -k 12 -c 1000 -w 4
+
 clean:
 	rm $(OBJS) $(BIN)
 
