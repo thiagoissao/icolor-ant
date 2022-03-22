@@ -150,10 +150,15 @@ aco_t *aco_info;
 void colorant_malloc(void);
 void colorant_initialization(void);
 void execute_colorant(ant_t **local_ant, ant_fixed_k_t **ant_fixed_k,
-                      tabucol_conflicts_t **tabucol_conflicts);
+                      tabucol_conflicts_t **tabucol_conflicts, int thread);
 
 gcp_solution_t *global_best_ant;
 pthread_mutex_t global_best_ant_mutex;
+
+int barrier_count;
+pthread_mutex_t barrier_count_lock;
+pthread_cond_t barrier_ok_to_proceed;
+
 pthread_t *workers;
 
 #endif /* __ICOLORANT1_H */

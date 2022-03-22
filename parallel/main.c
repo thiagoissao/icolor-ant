@@ -18,7 +18,7 @@ void find_global_best_ant(void *i) {
   ant_fixed_k_t *ant_fixed_k = NULL;
   tabucol_conflicts_t *tabucol_conflicts = NULL;
 
-  execute_colorant(&local_ant, &ant_fixed_k, &tabucol_conflicts);
+  execute_colorant(&local_ant, &ant_fixed_k, &tabucol_conflicts, (long)i);
 }
 
 int main(int argc, char *argv[]) {
@@ -96,7 +96,12 @@ int main(int argc, char *argv[]) {
   global_best_ant->spent_time_ls = 0;
   global_best_ant->total_cycles = 0;
   workers = malloc_(aco_info->threads * sizeof(pthread_t));
+
   pthread_mutex_init(&global_best_ant_mutex, NULL);
+
+  barrier_count = 0;
+  pthread_mutex_init(&barrier_count_lock, NULL);
+  pthread_cond_init(&barrier_ok_to_proceed, NULL);
 
   printbanner();
 
@@ -119,6 +124,7 @@ int main(int argc, char *argv[]) {
   free(workers);
   free(global_best_ant);
   pthread_mutex_destroy(&global_best_ant_mutex);
-
+  pthread_mutex_destroy(&barrier_count_lock);
+  pthread_cond_destroy(&barrier_ok_to_proceed);
   return 0;
 }
