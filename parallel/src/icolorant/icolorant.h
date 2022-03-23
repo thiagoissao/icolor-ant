@@ -155,9 +155,7 @@ void execute_colorant(ant_t **local_ant, ant_fixed_k_t **ant_fixed_k,
 gcp_solution_t *global_best_ant;
 pthread_mutex_t global_best_ant_mutex;
 
-int barrier_count;
-pthread_mutex_t barrier_count_lock;
-pthread_cond_t barrier_ok_to_proceed;
+pthread_barrier_t threads_barrier;
 
 pthread_t *workers;
 

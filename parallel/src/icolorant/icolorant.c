@@ -358,8 +358,6 @@ void execute_colorant(ant_t **local_ant, ant_fixed_k_t **ant_fixed_k,
   (*ant_fixed_k) = afk_initialize_data(aco_info->alpha, aco_info->beta);
   (*local_ant)->best_ant->stop_criterion = 0;
 
-  cpy_solution((*local_ant)->best_ant, (*local_ant)->best_ant);
-
   while (!terminate_conditions((*local_ant)->best_ant, cycle, converg)) {
 
     cycle = cycle + 1;
@@ -379,37 +377,24 @@ void execute_colorant(ant_t **local_ant, ant_fixed_k_t **ant_fixed_k,
       change = 1;
     }
 
+    pthread_barrier_wait(&threads_barrier);
+
     // atualizar a melhor global
+    pthread_mutex_lock(&global_best_ant_mutex);
     if (global_best_ant->nof_confl_vertices >
         (*local_ant)->best_ant->nof_confl_vertices) {
-      pthread_mutex_lock(&global_best_ant_mutex);
       cpy_solution((*local_ant)->best_ant, global_best_ant);
-      printf("thread: %i - atualizando melhor global - conflitos: %i\n", thread,
+      printf("thread: %i - atualizando melhor global - %i\n", thread,
              global_best_ant->nof_confl_vertices);
       global_best_ant->time_to_best = (*local_ant)->best_ant->spent_time;
-      pthread_mutex_unlock(&global_best_ant_mutex);
-
-      pthread_mutex_lock(&barrier_count_lock);
-      barrier_count = 0;
-      printf("thread %i - dormindo...\n", thread);
-      pthread_cond_wait(&barrier_ok_to_proceed, &barrier_count_lock);
-      pthread_mutex_unlock(&barrier_count_lock);
     }
+    pthread_mutex_unlock(&global_best_ant_mutex);
 
-    //--------------BARREIRA----------------------
-
-    pthread_mutex_lock(&barrier_count_lock);
+    pthread_barrier_wait(&threads_barrier);
     cpy_solution(global_best_ant, (*local_ant)->best_ant);
-    barrier_count++;
-    printf("thread: %i - ciclo: %i - CONFLITOS -> local: %i - global:  %i\n",
-           thread, cycle, (*local_ant)->best_ant->nof_confl_vertices,
+    printf("thread: %i - ciclo: %i ->local: %i - global:  %i\n", thread, cycle,
+           (*local_ant)->best_ant->nof_confl_vertices,
            global_best_ant->nof_confl_vertices);
-    if (barrier_count == aco_info->threads) {
-      barrier_count = 0;
-      printf("thread: %i - ACORDA TODO MUNDO...\n", thread);
-      pthread_cond_broadcast(&barrier_ok_to_proceed);
-    }
-    pthread_mutex_unlock(&barrier_count_lock);
 
     switch (aco_info->pheromone_scheme) {
     case PHEROMONE_SCHEME_1:
@@ -448,8 +433,6 @@ void execute_colorant(ant_t **local_ant, ant_fixed_k_t **ant_fixed_k,
           current_time_secs(TIME_FINAL, time_initial);
       (*local_ant)->best_ant->total_cycles = cycle;
       (*local_ant)->best_ant->stop_criterion = STOP_BEST;
-      pthread_cond_broadcast(&barrier_ok_to_proceed);
-
       break;
     }
 
@@ -488,14 +471,6 @@ void execute_colorant(ant_t **local_ant, ant_fixed_k_t **ant_fixed_k,
         aco_info->pheromone_scheme = 1;
 
       cycle_phero = 0;
-    }
-    if ((*local_ant)->best_ant->nof_confl_vertices !=
-        global_best_ant->nof_confl_vertices) {
-      printf(
-          "*******thread: %i - ciclo: %i - CONFLITOS -> local: %i - global:  "
-          "%i\n",
-          thread, cycle, (*local_ant)->best_ant->nof_confl_vertices,
-          global_best_ant->nof_confl_vertices);
     }
   }
 

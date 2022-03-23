@@ -99,10 +99,6 @@ int main(int argc, char *argv[]) {
 
   pthread_mutex_init(&global_best_ant_mutex, NULL);
 
-  barrier_count = 0;
-  pthread_mutex_init(&barrier_count_lock, NULL);
-  pthread_cond_init(&barrier_ok_to_proceed, NULL);
-
   printbanner();
 
   time_initial = current_time_secs(TIME_INITIAL, 0);
@@ -110,6 +106,7 @@ int main(int argc, char *argv[]) {
   for (int i = 0; i < aco_info->threads; i++) {
     pthread_create(&workers[i], NULL, (void *)find_global_best_ant, (void *)i);
   }
+  pthread_barrier_init(&threads_barrier, NULL, aco_info->threads);
 
   for (int i = 0; i < aco_info->threads; i++) {
     pthread_join(workers[i], NULL);
@@ -124,7 +121,7 @@ int main(int argc, char *argv[]) {
   free(workers);
   free(global_best_ant);
   pthread_mutex_destroy(&global_best_ant_mutex);
-  pthread_mutex_destroy(&barrier_count_lock);
-  pthread_cond_destroy(&barrier_ok_to_proceed);
+  pthread_barrier_destroy(&threads_barrier);
+
   return 0;
 }
