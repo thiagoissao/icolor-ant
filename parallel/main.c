@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
+#include <limits.h>
 
 #include "./src/icolorant/icolorant.h"
 #include "./src/helpers.h"
@@ -17,7 +18,7 @@ void find_global_best_ant(void *i) {
   ant_fixed_k_t *ant_fixed_k = NULL;
   tabucol_conflicts_t *tabucol_conflicts = NULL;
 
-  execute_colorant(&local_ant, &ant_fixed_k, &tabucol_conflicts);
+  execute_colorant(&local_ant, &ant_fixed_k, &tabucol_conflicts, (long)i);
 }
 
 int main(int argc, char *argv[]) {
@@ -88,7 +89,14 @@ int main(int argc, char *argv[]) {
   seed48_r(problem->seed, &problem->buffer);
 #endif
 
-  workers = malloc(aco_info->threads * sizeof(pthread_t));
+  global_best_ant = malloc_(sizeof(gcp_solution_t));
+  global_best_ant->color_of = malloc_(sizeof(int) * problem->nof_vertices);
+  global_best_ant->nof_confl_vertices = INT_MAX;
+  global_best_ant->nof_colors = problem->colors;
+  global_best_ant->spent_time_ls = 0;
+  global_best_ant->total_cycles = 0;
+  workers = malloc_(aco_info->threads * sizeof(pthread_t));
+
   pthread_mutex_init(&global_best_ant_mutex, NULL);
 
   printbanner();
@@ -98,6 +106,7 @@ int main(int argc, char *argv[]) {
   for (int i = 0; i < aco_info->threads; i++) {
     pthread_create(&workers[i], NULL, (void *)find_global_best_ant, (void *)i);
   }
+  pthread_barrier_init(&threads_barrier, NULL, aco_info->threads);
 
   for (int i = 0; i < aco_info->threads; i++) {
     pthread_join(workers[i], NULL);
@@ -110,7 +119,9 @@ int main(int argc, char *argv[]) {
   fclose(problem->fileout);
 
   free(workers);
+  free(global_best_ant);
   pthread_mutex_destroy(&global_best_ant_mutex);
+  pthread_barrier_destroy(&threads_barrier);
 
   return 0;
 }
