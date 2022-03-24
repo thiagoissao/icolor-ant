@@ -384,17 +384,12 @@ void execute_colorant(ant_t **local_ant, ant_fixed_k_t **ant_fixed_k,
     if (global_best_ant->nof_confl_vertices >
         (*local_ant)->best_ant->nof_confl_vertices) {
       cpy_solution((*local_ant)->best_ant, global_best_ant);
-      printf("thread: %i - atualizando melhor global - %i\n", thread,
-             global_best_ant->nof_confl_vertices);
       global_best_ant->time_to_best = (*local_ant)->best_ant->spent_time;
     }
     pthread_mutex_unlock(&global_best_ant_mutex);
 
     pthread_barrier_wait(&threads_barrier);
     cpy_solution(global_best_ant, (*local_ant)->best_ant);
-    printf("thread: %i - ciclo: %i ->local: %i - global:  %i\n", thread, cycle,
-           (*local_ant)->best_ant->nof_confl_vertices,
-           global_best_ant->nof_confl_vertices);
 
     switch (aco_info->pheromone_scheme) {
     case PHEROMONE_SCHEME_1:
